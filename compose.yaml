@@ -1,0 +1,44 @@
+# The talk's live demos: Redis 8 and PHP 8.5, nothing else.
+#
+#   docker compose up -d --build
+#   open http://localhost:8765
+#   docker compose exec app php cli.php demo run scenario stampede
+#
+# Redis is not published on the host on purpose: the demos run inside the
+# compose network, and a laptop often has another Redis on 6379 already.
+services:
+    redis:
+        image: redis:8-alpine
+        # volatile-ttl as in production; no snapshots, so a 1M-item ban never
+        # forks a background save in the middle of a measurement
+        command: redis-server --maxmemory-policy volatile-ttl --save "" --appendonly no
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 2s
+            timeout: 2s
+            retries: 15
+
+    app:
+        build:
+            context: .
+            dockerfile: docker/php/Dockerfile
+        environment:
+            # the built-in server answers the deck's files and /api/ping
+            # while a live run streams
+            PHP_CLI_SERVER_WORKERS: "4"
+            TALK_MACHINE: "laptop (docker compose)"
+        ports:
+            # TALK_PORT=… docker compose up, if 8765 is taken
+            - "${TALK_PORT:-8765}:8080"
+        # the File store's directories and the lock files: in memory, never
+        # on a bind mount; 4 GB, since every file takes a 4 KB page at least
+        # (the file ban's 500 000 cached pages: about 2 GB)
+        tmpfs:
+            - /tmp/talk:size=4g
+        # `php cli.php demo record` writes the deck's recordings straight
+        # into the repository
+        volumes:
+            - ./site/data:/app/site/data
+        depends_on:
+            redis:
+                condition: service_healthy

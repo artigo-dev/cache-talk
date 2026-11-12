@@ -1,0 +1,8 @@
+/.idea/
+*.cache
+/project/vendor/
+/project/.env
+/project/application/logs/*
+!/project/application/logs/.gitkeep
+# the plan lives outside the public repository (rg-dev/cache-speaker/plans)
+/docs/plans/

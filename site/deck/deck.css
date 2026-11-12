@@ -1,0 +1,2695 @@
+/*	rg-dev / cache — the deck.
+	The typographic system of the artigo package headers (docs/src/plate.html
+	in artigo/versioned-cache and artigo/cache-stampede): Rajdhani set wide,
+	mint on near-black, a faint 44 px grid, a letter-spaced mono for labels,
+	the "stamp" for a result. Red and yellow come from the codesafe site:
+	red is the problem, yellow is waiting, mint is what solves it. */
+
+@font-face
+{
+	font-family: 'Rajdhani';
+	font-weight: 400;
+	font-display: block;
+	src: url('../fonts/rajdhani/rajdhani-400.woff2') format('woff2');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face
+{
+	font-family: 'Rajdhani';
+	font-weight: 400;
+	font-display: block;
+	src: url('../fonts/rajdhani/rajdhani-400-latin-ext.woff2') format('woff2');
+	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face
+{
+	font-family: 'Rajdhani';
+	font-weight: 500;
+	font-display: block;
+	src: url('../fonts/rajdhani/rajdhani-500.woff2') format('woff2');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face
+{
+	font-family: 'Rajdhani';
+	font-weight: 500;
+	font-display: block;
+	src: url('../fonts/rajdhani/rajdhani-500-latin-ext.woff2') format('woff2');
+	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face
+{
+	font-family: 'Rajdhani';
+	font-weight: 600;
+	font-display: block;
+	src: url('../fonts/rajdhani/rajdhani-600.woff2') format('woff2');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face
+{
+	font-family: 'Rajdhani';
+	font-weight: 600;
+	font-display: block;
+	src: url('../fonts/rajdhani/rajdhani-600-latin-ext.woff2') format('woff2');
+	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face
+{
+	font-family: 'Rajdhani';
+	font-weight: 700;
+	font-display: block;
+	src: url('../fonts/rajdhani/rajdhani-700.woff2') format('woff2');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face
+{
+	font-family: 'Rajdhani';
+	font-weight: 700;
+	font-display: block;
+	src: url('../fonts/rajdhani/rajdhani-700-latin-ext.woff2') format('woff2');
+	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root
+{
+	/* the bottom of what the room sees: below it the screen may hang behind heads */
+	--safe: 900px;
+	--bg: #0a0a12;
+	--panel: #0d0d17;
+	--panel-2: #11111c;
+	--border: #26263a;
+	--text: #e8e8f0;
+	--muted: #8b8ba7;
+	--mint: #3ddc97;
+	--mint-glow: rgba(61, 220, 151, 0.45);
+	--red: #ff003c;
+	--red-glow: rgba(255, 0, 60, 0.40);
+	--yellow: #fcee0a;
+	--cyan: #00f0ff;
+	--violet: #c77dff;
+	--grid: rgba(61, 220, 151, 0.05);
+	--letterbox: #000;
+	--display: 'Rajdhani', 'Segoe UI', sans-serif;
+	--mono: 'Cascadia Code', Consolas, 'Courier New', monospace;
+	--scale: 1;
+}
+
+/* T: for a projector that washes the dark theme out */
+:root[data-theme="light"]
+{
+	--bg: #f4f4f8;
+	--panel: #ffffff;
+	--panel-2: #ececf3;
+	--border: #c9c9d8;
+	--text: #14141f;
+	--muted: #55556e;
+	--mint: #0b8f5c;
+	--mint-glow: rgba(11, 143, 92, 0.18);
+	--red: #d1002f;
+	--red-glow: rgba(209, 0, 47, 0.15);
+	--yellow: #a07c00;
+	--cyan: #007f8a;
+	--violet: #7b2cbf;
+	--grid: rgba(11, 143, 92, 0.07);
+	--letterbox: #d8d8e2;
+}
+
+*
+{
+	box-sizing: border-box;
+}
+
+html, body
+{
+	margin: 0;
+	height: 100%;
+	overflow: hidden;
+	background: var(--letterbox);
+	color: var(--text);
+	font-family: var(--display);
+}
+
+/* the stage: a 1920×1080 slide, scaled to the window and centred */
+
+.deck
+{
+	position: fixed;
+	inset: 0;
+}
+
+.slide
+{
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 1920px;
+	height: 1080px;
+	padding: 30px 140px 0;
+	overflow: hidden;
+	background: var(--bg);
+	transform: translate(-50%, -50%) scale(var(--scale));
+	visibility: hidden;
+	opacity: 0;
+	transition: opacity .25s ease;
+}
+
+.slide.current
+{
+	visibility: visible;
+	opacity: 1;
+}
+
+.slide::before
+{
+	content: '';
+	position: absolute;
+	inset: 0;
+	background-image:
+		linear-gradient(var(--grid) 1px, transparent 1px),
+		linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+	background-size: 88px 88px, 88px 88px;
+	pointer-events: none;
+}
+
+.slide::after
+{
+	content: '';
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(110% 110% at 85% 35%, var(--mint-glow), transparent 55%),
+		linear-gradient(90deg, var(--bg) 0%, transparent 70%);
+	opacity: .22;
+	pointer-events: none;
+}
+
+.slide > *
+{
+	position: relative;
+	z-index: 1;
+}
+
+/* the plate's type */
+
+.eyebrow
+{
+	font-size: 22px;
+	font-weight: 600;
+	letter-spacing: .42em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.eyebrow .on
+{
+	color: var(--mint);
+	opacity: .85;
+}
+
+.eyebrow .bad
+{
+	color: var(--red);
+}
+
+.word
+{
+	margin: 22px 0 0;
+	font-size: 90px;
+	font-weight: 700;
+	letter-spacing: .14em;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.word .a
+{
+	color: var(--text);
+	text-shadow: 0 0 44px rgba(232, 232, 240, 0.22);
+}
+
+.word .b
+{
+	color: var(--mint);
+	text-shadow: 0 0 44px var(--mint-glow);
+}
+
+.word .r
+{
+	color: var(--red);
+	text-shadow: 0 0 44px var(--red-glow);
+}
+
+h2
+{
+	margin: 18px 0 0;
+	font-size: 62px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	line-height: 1.05;
+	text-transform: uppercase;
+}
+
+.claim
+{
+	margin: 30px 0 0;
+	max-width: 1400px;
+	font-size: 48px;
+	font-weight: 600;
+	line-height: 1.15;
+}
+
+.g
+{
+	color: var(--mint);
+}
+
+.x
+{
+	color: var(--red);
+}
+
+.w
+{
+	color: var(--yellow);
+}
+
+.m
+{
+	color: var(--muted);
+}
+
+.rule
+{
+	margin: 34px 0 0;
+	width: 1000px;
+	height: 2px;
+	background: linear-gradient(90deg, var(--mint), rgba(38, 38, 58, 0.9) 30%, rgba(38, 38, 58, 0));
+}
+
+.rule.bad
+{
+	background: linear-gradient(90deg, var(--red), rgba(38, 38, 58, 0.9) 30%, rgba(38, 38, 58, 0));
+}
+
+.sub
+{
+	margin: 24px 0 0;
+	font-family: var(--mono);
+	font-size: 22px;
+	letter-spacing: .09em;
+	color: var(--muted);
+}
+
+ul.points
+{
+	margin: 44px 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 40px;
+	font-weight: 500;
+	line-height: 1.3;
+}
+
+ul.points li
+{
+	position: relative;
+	margin: 0 0 22px;
+	padding-left: 48px;
+}
+
+ul.points li::before
+{
+	content: '//';
+	position: absolute;
+	left: 0;
+	color: var(--mint);
+	font-weight: 700;
+	opacity: .85;
+}
+
+ul.points li.bad::before
+{
+	color: var(--red);
+}
+
+/* the result of a demo: a big number over a small caption */
+
+.stamp
+{
+	text-align: center;
+}
+
+.stamp .v
+{
+	font-size: 128px;
+	font-weight: 700;
+	letter-spacing: .04em;
+	line-height: 1;
+	color: var(--mint);
+	text-shadow: 0 0 52px var(--mint-glow);
+}
+
+.stamp.bad .v
+{
+	color: var(--red);
+	text-shadow: 0 0 52px var(--red-glow);
+}
+
+.stamp .l
+{
+	margin-top: 14px;
+	font-family: var(--mono);
+	font-size: 22px;
+	letter-spacing: .24em;
+	color: var(--muted);
+	text-transform: uppercase;
+}
+
+.stamp.corner
+{
+	position: absolute;
+	right: 140px;
+	top: calc(var(--safe) / 2);
+	transform: translateY(-50%);
+}
+
+/* the title slide's QR code: the deck on GitHub Pages. Dark modules on a light card in both themes:
+   inverted codes scan badly */
+
+.qr.corner
+{
+	position: absolute;
+	right: 140px;
+	top: calc(var(--safe) / 2);
+	transform: translateY(-50%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+	border-bottom: 0;
+	color: var(--muted);
+	text-decoration: none;
+}
+
+.qr .qr-code
+{
+	display: block;
+	width: 280px;
+	height: 280px;
+	padding: 6px;
+	border-radius: 12px;
+	background: #f4f4f8;
+	fill: #0a0a12;
+	box-shadow: 0 0 44px var(--mint-glow);
+}
+
+.qr .qr-l
+{
+	margin-top: 4px;
+	font-family: var(--mono);
+	font-size: 20px;
+	letter-spacing: .2em;
+	text-transform: uppercase;
+}
+
+.qr .qr-url
+{
+	font-family: var(--mono);
+	font-size: 19px;
+	letter-spacing: .04em;
+	color: var(--text);
+}
+
+/* code: a panel, a small highlighter's classes (deck.js) */
+
+pre.code
+{
+	margin: 40px 0 0;
+	padding: 32px 40px;
+	max-width: 1640px;
+	overflow: hidden;
+	background: var(--panel);
+	border: 1px solid var(--border);
+	border-left: 3px solid var(--mint);
+	font-family: var(--mono);
+	font-size: 27px;
+	line-height: 1.4;
+	color: var(--text);
+	white-space: pre;
+	tab-size: 4;
+	/* PHP as it is typed: -> and => stay two characters, not arrows */
+	font-variant-ligatures: none;
+	font-feature-settings: "liga" 0, "calt" 0;
+}
+
+pre.code .k { color: #c792ea; }
+pre.code .s { color: var(--mint); }
+pre.code .c { color: var(--muted); font-style: italic; }
+pre.code .v { color: var(--cyan); }
+pre.code .n { color: var(--yellow); }
+pre.code .f { color: #82aaff; }
+pre.code .add { background: rgba(61, 220, 151, 0.12); display: inline-block; width: 100%; }
+pre.code .del { background: rgba(255, 0, 60, 0.12); display: inline-block; width: 100%; color: var(--muted); }
+pre.code .hl { background: rgba(252, 238, 10, 0.10); display: inline-block; width: 100%; }
+
+:root[data-theme="light"] pre.code .k { color: #7a3eb1; }
+:root[data-theme="light"] pre.code .f { color: #2457c5; }
+
+/* the road: the stations of the talk, the current one lit */
+
+.road
+{
+	display: flex;
+	align-items: flex-start;
+	margin: 64px 0 0;
+}
+
+.road .station
+{
+	position: relative;
+	flex: 1 1 0;
+	min-width: 0;
+	padding: 46px 8px 0 0;
+	font-size: 18px;
+	font-weight: 600;
+	letter-spacing: .03em;
+	line-height: 1.15;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.road .station::before
+{
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 13px;
+	height: 2px;
+	background: var(--border);
+}
+
+/* the road ends at the last station: as wide as its dot, so the others spread over the whole width, its
+   name running on into the margin; no line after it */
+
+.road .station:last-child
+{
+	flex: 0 0 20px;
+	padding-right: 0;
+	white-space: nowrap;
+}
+
+.road .station:last-child::before
+{
+	display: none;
+}
+
+.road .station::after
+{
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 4px;
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--border);
+	border-radius: 50%;
+	background: var(--bg);
+}
+
+.road .station.passed
+{
+	color: var(--text);
+}
+
+.road .station.passed::before
+{
+	background: var(--mint);
+	opacity: .55;
+}
+
+/* the dot is solid (the dimmed mint mixed in, not see-through), so the line does not show through it */
+
+.road .station.passed::after
+{
+	border-color: color-mix(in srgb, var(--mint) 55%, var(--bg));
+	background: color-mix(in srgb, var(--mint) 55%, var(--bg));
+}
+
+.road .station.here
+{
+	color: var(--mint);
+	text-shadow: 0 0 22px var(--mint-glow);
+}
+
+.road .station.here::after
+{
+	border-color: var(--mint);
+	background: var(--mint);
+	box-shadow: 0 0 22px var(--mint-glow);
+}
+
+.road .station .year
+{
+	display: block;
+	margin-top: 8px;
+	font-family: var(--mono);
+	font-size: 19px;
+	letter-spacing: .12em;
+	color: var(--muted);
+}
+
+/* a demo: a head, a stage the renderer draws into, a foot */
+
+.demo
+{
+	position: absolute;
+	inset: 26px 120px calc(1080px - var(--safe) + 60px);
+	display: flex;
+	flex-direction: column;
+}
+
+.demo-head
+{
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 40px;
+}
+
+.demo-head h3
+{
+	flex: none;
+	margin: 0;
+	font-size: 46px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+}
+
+.demo-stage
+{
+	position: relative;
+	flex: 1;
+	margin-top: 26px;
+}
+
+.demo-foot
+{
+	display: flex;
+	justify-content: space-between;
+	gap: 40px;
+	margin-top: 18px;
+	font-family: var(--mono);
+	font-size: 19px;
+	letter-spacing: .08em;
+	color: var(--muted);
+}
+
+.demo-foot .source.live
+{
+	color: var(--mint);
+}
+
+.demo-foot .source.error
+{
+	color: var(--red);
+}
+
+.demo-foot kbd
+{
+	padding: 1px 8px;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	font-family: var(--mono);
+	color: var(--text);
+}
+
+/* the keys in a demo's foot are buttons as well: a click replays, changes the speed, runs live */
+
+.demo-foot button
+{
+	margin: 0 -6px;
+	padding: 3px 6px;
+	border: 0;
+	border-radius: 6px;
+	background: none;
+	font: inherit;
+	letter-spacing: inherit;
+	color: inherit;
+	cursor: pointer;
+	transition: color .15s, background-color .15s;
+}
+
+.demo-foot button kbd
+{
+	transition: border-color .15s, color .15s, background-color .15s;
+}
+
+.demo-foot button:hover,
+.demo-foot button:focus-visible
+{
+	outline: none;
+	color: var(--text);
+	background: var(--panel-2);
+}
+
+.demo-foot button:hover kbd,
+.demo-foot button:focus-visible kbd
+{
+	border-color: var(--mint);
+	color: var(--mint);
+}
+
+.demo-foot button:active kbd
+{
+	background: var(--mint);
+	color: var(--bg);
+}
+
+/* the stampede demo (demos/stampede.js) */
+
+svg.stampede .tick
+{
+	stroke: var(--border);
+	stroke-width: 1;
+}
+
+svg.stampede .tick-label
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 18px;
+	text-anchor: middle;
+}
+
+svg.stampede .cursor
+{
+	stroke: var(--text);
+	stroke-width: 1.5;
+	opacity: .35;
+}
+
+svg.stampede .panel-label
+{
+	fill: var(--text);
+	font-family: var(--display);
+	font-size: 30px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+}
+
+svg.stampede .mode-memolock .panel-label
+{
+	fill: var(--mint);
+}
+
+svg.stampede .panel-sub
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 18px;
+	letter-spacing: .06em;
+}
+
+svg.stampede .host-split
+{
+	stroke: var(--border);
+	stroke-dasharray: 4 6;
+}
+
+svg.stampede .track
+{
+	fill: var(--border);
+}
+
+svg.stampede .wait
+{
+	fill: var(--yellow);
+	opacity: .55;
+}
+
+svg.stampede .work
+{
+	fill: var(--red);
+	filter: drop-shadow(0 0 6px var(--red-glow));
+}
+
+svg.stampede .done
+{
+	fill: var(--mint);
+	filter: drop-shadow(0 0 5px var(--mint-glow));
+}
+
+/* the legend: what a thick bar, a thin line and a dot mean */
+
+svg.stampede .legend-label
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 18px;
+	letter-spacing: .04em;
+}
+
+svg.stampede .stamp-v
+{
+	font-family: var(--display);
+	font-size: 110px;
+	font-weight: 700;
+	text-anchor: middle;
+}
+
+svg.stampede .stamp-v.bad
+{
+	fill: var(--red);
+	filter: drop-shadow(0 0 18px var(--red-glow));
+}
+
+svg.stampede .stamp-v.good
+{
+	fill: var(--mint);
+	filter: drop-shadow(0 0 18px var(--mint-glow));
+}
+
+svg.stampede .stamp-l
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 17px;
+	letter-spacing: .22em;
+	text-anchor: middle;
+}
+
+/* fragments: revealed one arrow press at a time */
+
+.fragment
+{
+	opacity: 0;
+	transition: opacity .3s ease, transform .3s ease;
+	transform: translateY(12px);
+}
+
+.fragment.shown
+{
+	opacity: 1;
+	transform: none;
+}
+
+/* chrome: the slide counter, the clock of a presenter's own screen */
+
+.chrome
+{
+	position: fixed;
+	right: 18px;
+	bottom: 12px;
+	z-index: 10;
+	display: flex;
+	gap: 18px;
+	align-items: baseline;
+	font-family: var(--mono);
+	font-size: 13px;
+	letter-spacing: .12em;
+	color: var(--muted);
+	opacity: .55;
+}
+
+.chrome[hidden]
+{
+	display: none;
+}
+
+.chrome:hover
+{
+	opacity: 1;
+}
+
+/* the language: each text is there twice, <html lang> shows one */
+
+html[lang="pl"] [lang="en"],
+html[lang="en"] [lang="pl"]
+{
+	display: none !important;
+}
+
+/* EN · PL by the slide counter: the language on screen lit */
+
+.chrome .language
+{
+	padding: 2px 4px;
+	border: 0;
+	background: none;
+	font: inherit;
+	letter-spacing: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+.chrome .language span
+{
+	opacity: .55;
+}
+
+html[lang="en"] .chrome .language .en,
+html[lang="pl"] .chrome .language .pl
+{
+	opacity: 1;
+	color: var(--text);
+}
+
+.blank .slide
+{
+	visibility: hidden !important;
+}
+
+/* O: every slide at once */
+
+/* the grid is taller than the window: the deck scrolls while it is open */
+
+.overview .deck
+{
+	overflow-x: hidden;
+	overflow-y: auto;
+	scrollbar-gutter: stable;
+}
+
+.overview .slide
+{
+	visibility: visible;
+	opacity: 1;
+	cursor: pointer;
+	transition: none;
+	outline: 2px solid transparent;
+}
+
+.overview .slide.current
+{
+	outline-color: var(--mint);
+}
+
+/* the slide's number, big enough to read at the overview's scale */
+
+.slide > .slide-number
+{
+	display: none;
+}
+
+.overview .slide > .slide-number
+{
+	display: block;
+	position: absolute;
+	right: 40px;
+	bottom: 40px;
+	z-index: 2;
+	padding: 14px 40px;
+	border: 4px solid var(--border);
+	border-radius: 28px;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--mono);
+	font-size: 140px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.overview .slide.current > .slide-number
+{
+	border-color: var(--mint);
+	color: var(--mint);
+}
+
+/* the presenter's window (P) */
+
+.presenter
+{
+	display: grid;
+	grid-template-columns: 3fr 2fr;
+	grid-template-rows: auto 1fr;
+	gap: 18px;
+	height: 100%;
+	padding: 18px;
+	overflow: hidden;
+	background: #050509;
+	color: #e8e8f0;
+	font-family: var(--display);
+}
+
+.presenter .clock
+{
+	grid-column: 1 / 3;
+	display: flex;
+	justify-content: space-between;
+	font-family: var(--mono);
+	font-size: 34px;
+	letter-spacing: .1em;
+}
+
+.presenter .clock .elapsed
+{
+	color: var(--mint);
+}
+
+.presenter .frames
+{
+	display: grid;
+	grid-template-rows: 3fr 2fr;
+	gap: 18px;
+	min-height: 0;
+}
+
+.presenter iframe
+{
+	width: 100%;
+	height: 100%;
+	border: 1px solid var(--border);
+	background: #000;
+}
+
+.presenter .notes
+{
+	overflow: auto;
+	padding: 6px 12px;
+	font-size: 30px;
+	line-height: 1.35;
+}
+
+.presenter .notes h4
+{
+	margin: 0 0 12px;
+	font-family: var(--mono);
+	font-size: 16px;
+	letter-spacing: .2em;
+	color: var(--muted);
+}
+
+aside.notes
+{
+	display: none;
+}
+
+/* print: one slide a page, for the organiser's PDF */
+
+@media print
+{
+	@page
+	{
+		size: 1920px 1080px;
+		margin: 0;
+	}
+	
+	html, body
+	{
+		height: auto;
+		overflow: visible;
+		background: var(--bg);
+	}
+	
+	.deck
+	{
+		position: static;
+	}
+	
+	.slide
+	{
+		position: relative;
+		left: auto;
+		top: auto;
+		visibility: visible;
+		opacity: 1;
+		transform: none;
+		page-break-after: always;
+		break-after: page;
+	}
+	
+	.fragment
+	{
+		opacity: 1;
+		transform: none;
+	}
+	
+	.chrome
+	{
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+	.slide,
+	.fragment
+	{
+		transition: none;
+	}
+}
+
+/* L appears only where the talk's own server can run a demo live */
+
+.live-only
+{
+	display: none;
+}
+
+.can-run-live .live-only
+{
+	display: inline;
+}
+
+/* a flow: boxes and the arrows between them (what talks to what) */
+
+.flow
+{
+	display: flex;
+	align-items: center;
+	gap: 0;
+	margin: 56px 0 0;
+}
+
+.flow .box
+{
+	min-width: 230px;
+	padding: 24px 28px;
+	border: 2px solid var(--border);
+	border-radius: 12px;
+	background: var(--panel);
+	text-align: center;
+	font-size: 30px;
+	font-weight: 700;
+	letter-spacing: .06em;
+	line-height: 1.15;
+	text-transform: uppercase;
+}
+
+.flow .box small
+{
+	display: block;
+	margin-top: 6px;
+	font-family: var(--mono);
+	font-size: 18px;
+	font-weight: 400;
+	letter-spacing: .04em;
+	color: var(--muted);
+	text-transform: none;
+}
+
+.flow .box.good
+{
+	border-color: var(--mint);
+	box-shadow: 0 0 34px var(--mint-glow);
+}
+
+.flow .box.bad
+{
+	border-color: var(--red);
+	box-shadow: 0 0 34px var(--red-glow);
+}
+
+.flow .box.slow
+{
+	border-style: dashed;
+}
+
+.flow .arrow
+{
+	flex: 1;
+	min-width: 120px;
+	position: relative;
+	padding: 0 18px 30px;
+	text-align: center;
+	font-family: var(--mono);
+	font-size: 20px;
+	color: var(--muted);
+}
+
+.flow .arrow::after
+{
+	content: '';
+	position: absolute;
+	left: 10px;
+	right: 14px;
+	bottom: 12px;
+	height: 2px;
+	background: linear-gradient(90deg, var(--border), var(--muted));
+}
+
+/* the head: over the line's end, in the line's colour */
+
+.flow .arrow::before
+{
+	content: '';
+	position: absolute;
+	z-index: 1;
+	right: 8px;
+	bottom: 6px;
+	border: 7px solid transparent;
+	border-right: 0;
+	border-left: 12px solid var(--muted);
+}
+
+.flow .arrow.bad::after
+{
+	background: linear-gradient(90deg, var(--border), var(--red));
+}
+
+.flow .arrow.bad::before
+{
+	border-left-color: var(--red);
+}
+
+.flow .arrow.good::after
+{
+	background: linear-gradient(90deg, var(--border), var(--mint));
+}
+
+.flow .arrow.good::before
+{
+	border-left-color: var(--mint);
+}
+
+/* a term, explained in one plain sentence where it first appears */
+
+.term
+{
+	position: absolute;
+	left: 140px;
+	right: 140px;
+	bottom: calc(1080px - var(--safe) + 60px);
+	display: flex;
+	gap: 26px;
+	align-items: baseline;
+	padding: 20px 28px;
+	border: 1px solid var(--border);
+	border-left: 3px solid var(--cyan);
+	border-radius: 12px;
+	background: var(--panel);
+	font-size: 27px;
+	font-weight: 500;
+	line-height: 1.3;
+}
+
+.term b
+{
+	flex: none;
+	font-family: var(--mono);
+	font-size: 20px;
+	font-weight: 400;
+	letter-spacing: .22em;
+	color: var(--cyan);
+	text-transform: uppercase;
+}
+
+/* two columns: before / after, problem / fix */
+
+.columns
+{
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 60px;
+	margin: 50px 0 0;
+}
+
+.columns h4
+{
+	margin: 0 0 18px;
+	font-size: 26px;
+	font-weight: 700;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.columns h4.g
+{
+	color: var(--mint);
+}
+
+.columns h4.x
+{
+	color: var(--red);
+}
+
+.columns ul.points
+{
+	margin-top: 0;
+	font-size: 34px;
+}
+
+.columns pre.code
+{
+	margin-top: 0;
+	font-size: 22px;
+}
+
+/* a cached page's life as a bar: fresh, then expired but still handed out, or deleted by an edit */
+
+.lifeline
+{
+	display: flex;
+	margin: 0 0 34px;
+	height: 58px;
+	border-radius: 8px;
+	overflow: hidden;
+	font-family: var(--mono);
+	font-size: 18px;
+	letter-spacing: .04em;
+}
+
+.lifeline > span
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 12px;
+	white-space: nowrap;
+}
+
+.lifeline .fresh
+{
+	flex: 2;
+	background: rgba(61, 220, 151, 0.18);
+	color: var(--mint);
+}
+
+.lifeline .old
+{
+	flex: 3;
+	background: rgba(252, 238, 10, 0.14);
+	color: var(--yellow);
+}
+
+.lifeline .cut
+{
+	flex: 0 0 auto;
+	background: var(--red);
+	color: var(--bg);
+	font-weight: 700;
+}
+
+.lifeline .gone
+{
+	flex: 3;
+	background: repeating-linear-gradient(135deg, rgba(255, 0, 60, 0.16) 0 10px, transparent 10px 20px);
+	color: var(--red);
+}
+
+.columns.why-stale
+{
+	margin-top: 80px;
+}
+
+.columns.why-stale .lifeline
+{
+	height: 70px;
+	margin-bottom: 44px;
+}
+
+.columns.why-stale + .claim
+{
+	margin-top: 90px;
+}
+
+.lifeline .new
+{
+	flex: 1;
+	background: rgba(61, 220, 151, 0.32);
+	color: var(--text);
+}
+
+/* a big statement, the line the room should remember */
+
+.statement
+{
+	margin: 100px 0 0;
+	max-width: 1640px;
+	font-size: 70px;
+	font-weight: 700;
+	line-height: 1.1;
+	letter-spacing: .02em;
+}
+
+/* the chapter divider's one-line teaser, under the road */
+
+.teaser
+{
+	margin: 96px 0 0;
+	max-width: 1450px;
+	font-size: 46px;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+/* the lessons of the recap, one per station */
+
+ol.lessons
+{
+	margin: 40px 0 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: lesson;
+	columns: 2;
+	column-gap: 90px;
+	font-size: 28px;
+	font-weight: 500;
+	line-height: 1.3;
+}
+
+ol.lessons li
+{
+	position: relative;
+	margin: 0 0 20px;
+	padding-left: 64px;
+	break-inside: avoid;
+	counter-increment: lesson;
+}
+
+ol.lessons li::before
+{
+	content: counter(lesson, decimal-leading-zero);
+	position: absolute;
+	left: 0;
+	font-family: var(--mono);
+	font-size: 24px;
+	color: var(--mint);
+}
+
+/* a numbered sequence: what happens, in order (the race) */
+
+ol.sequence
+{
+	margin: 44px 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 35px;
+	font-weight: 500;
+	line-height: 1.3;
+}
+
+ol.sequence li
+{
+	display: grid;
+	grid-template-columns: 220px 1fr;
+	gap: 24px;
+	margin: 0 0 20px;
+}
+
+ol.sequence li .when
+{
+	font-family: var(--mono);
+	font-size: 26px;
+	color: var(--muted);
+	padding-top: 6px;
+}
+
+/* a demo whose scenario is not built yet */
+
+.demo-placeholder
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	border: 2px dashed var(--border);
+	font-family: var(--mono);
+	font-size: 26px;
+	letter-spacing: .2em;
+	color: var(--muted);
+	text-transform: uppercase;
+}
+
+/* a line right under the road: clear of the two-line station names */
+
+.road + .claim
+{
+	margin-top: 100px;
+}
+
+/* code split by when it runs: DISPLAY (showing a page) beside EDIT (an editor saving) */
+
+.code-columns
+{
+	margin-top: 40px;
+	gap: 50px;
+}
+
+.code-columns h4
+{
+	margin-bottom: 14px;
+	color: var(--cyan);
+	letter-spacing: .3em;
+}
+
+.code-columns pre.code
+{
+	max-width: none;
+	font-size: 24px;
+}
+
+/* the left code is the longer one (Lua inside Redis, beside the PHP that calls it) */
+
+.code-columns.wide-left
+{
+	grid-template-columns: 1.45fr 1fr;
+}
+
+/* the right code is the longer one (the Lua beside the Redis it leaves behind) */
+
+.code-columns.wide-right
+{
+	grid-template-columns: 1fr 1.45fr;
+}
+
+/* a flow that forks: several boxes stacked at one step (a load balancer's servers) */
+
+.flow .stack
+{
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.flow .stack .box
+{
+	min-width: 520px;
+	text-align: left;
+}
+
+/* a divider's teaser that introduces a list: the list follows close */
+
+.teaser + .points
+{
+	margin-top: 26px;
+}
+
+/* a sequence's left column, lit: the chosen option */
+
+ol.sequence li .when.g
+{
+	color: var(--mint);
+	font-weight: 700;
+}
+
+/* a table of measurements */
+
+table.data
+{
+	margin: 36px 0 0;
+	width: 100%;
+	max-width: 1640px;
+	border-collapse: collapse;
+	font-family: var(--mono);
+	font-size: 27px;
+}
+
+table.data th
+{
+	padding: 0 24px 14px 0;
+	text-align: left;
+	font-size: 18px;
+	font-weight: 400;
+	letter-spacing: .14em;
+	color: var(--muted);
+	text-transform: uppercase;
+	border-bottom: 1px solid var(--border);
+}
+
+table.data td
+{
+	padding: 15px 24px 15px 0;
+	border-bottom: 1px solid var(--border);
+}
+
+table.data tr.hl td
+{
+	background: rgba(61, 220, 151, 0.05);
+}
+
+/* the stations lead somewhere: a click goes to the slide the station starts on */
+
+.road .station
+{
+	cursor: pointer;
+}
+
+.road .station:hover
+{
+	color: var(--text);
+}
+
+/* the small road at the foot of what the room sees (right above the free bottom quarter): where we are, and a way back */
+
+.road.mini
+{
+	position: absolute;
+	left: 140px;
+	right: 140px;
+	top: calc(var(--safe) - 44px);
+	z-index: 2;
+	margin: 0;
+}
+
+.road.mini .station
+{
+	height: 36px;
+	padding: 20px 10px 0 0;
+	font-size: 0;
+	white-space: nowrap;
+}
+
+.road.mini .station::before
+{
+	top: 6px;
+	height: 1px;
+}
+
+.road.mini .station::after
+{
+	top: 0;
+	width: 13px;
+	height: 13px;
+}
+
+.road.mini .station:last-child
+{
+	flex-basis: 13px;
+	padding-right: 0;
+}
+
+.road.mini .station.here
+{
+	font-size: 14px;
+	letter-spacing: .12em;
+}
+
+.road.mini .station:hover
+{
+	font-size: 14px;
+	color: var(--text);
+}
+
+@media print
+{
+	.road .station
+	{
+		cursor: default;
+	}
+}
+
+/* a table beside the points it proves (the zstd numbers) */
+
+.columns.table-left
+{
+	grid-template-columns: 1.7fr 1fr;
+	align-items: start;
+}
+
+.columns table.data
+{
+	margin-top: 0;
+}
+
+/* numbers: right-aligned, so the decimal points line up */
+
+/* a comparison: the designs' names as they are written, the cells wrapping */
+
+table.data.compare
+{
+	font-family: var(--display);
+	font-size: 30px;
+	table-layout: fixed;
+}
+
+table.data.compare th
+{
+	font-family: var(--mono);
+	font-size: 20px;
+	letter-spacing: .02em;
+	text-transform: none;
+	color: var(--text);
+}
+
+table.data.compare th:first-child,
+table.data.compare td:first-child
+{
+	width: 15%;
+	color: var(--muted);
+}
+
+table.data.compare th.g
+{
+	color: var(--mint);
+}
+
+/* a comparison with a measured figure in every cell: the figure big, what it means under it */
+
+table.data.compare.scores td
+{
+	padding-top: 20px;
+	padding-bottom: 20px;
+	vertical-align: top;
+}
+
+/* Polish needs a wider first column for the rows' names */
+
+html[lang="pl"] table.data.compare.scores th:first-child,
+html[lang="pl"] table.data.compare.scores td:first-child
+{
+	width: 19%;
+}
+
+table.data.compare.scores td small
+{
+	display: block;
+	margin-top: 6px;
+	font-family: var(--mono);
+	font-size: 16px;
+	color: var(--muted);
+}
+
+table.data.compare.scores .fig
+{
+	display: block;
+	font-size: 68px;
+	font-weight: 700;
+	letter-spacing: .02em;
+	line-height: 1;
+	color: var(--mint);
+	text-shadow: 0 0 32px var(--mint-glow);
+}
+
+table.data.compare.scores .fig.bad
+{
+	color: var(--red);
+	text-shadow: 0 0 32px var(--red-glow);
+}
+
+table.data.compare.scores .why
+{
+	display: block;
+	margin-top: 8px;
+	font-size: 22px;
+	line-height: 1.3;
+	color: var(--muted);
+}
+
+table.data.compare th small
+{
+	display: block;
+	margin-top: 6px;
+	font-size: 16px;
+	color: var(--muted);
+}
+
+table.data.compare td
+{
+	padding-top: 30px;
+	padding-bottom: 30px;
+}
+
+table.data.compare + .claim
+{
+	margin-top: 56px;
+}
+
+table.data .num
+{
+	text-align: right;
+}
+
+/* a pair of rows for one value (two codecs): no line between them */
+
+table.data tr.pair td
+{
+	border-bottom-color: transparent;
+}
+
+/* a demo's heading keeps its one line; the label beside it wraps instead */
+
+.demo-head .eyebrow
+{
+	text-align: right;
+	line-height: 1.5;
+}
+
+/* the title: the whole visible three quarters for the name of the talk */
+
+#title
+{
+	padding-top: 100px;
+}
+
+#title .word
+{
+	font-size: 118px;
+}
+
+#title .claim
+{
+	font-size: 54px;
+}
+
+/* a notice pinned instead of deleting: a rubber stamp beside the sentence that names it */
+
+.defs
+{
+	position: absolute;
+	width: 0;
+	height: 0;
+	overflow: hidden;
+}
+
+.teaser-row
+{
+	display: flex;
+	align-items: center;
+	gap: 80px;
+	margin: 96px 0 0;
+}
+
+.teaser-row .teaser
+{
+	margin: 0;
+	max-width: 1000px;
+}
+
+.teaser-row + .points
+{
+	margin-top: 26px;
+}
+
+.notice-stamp
+{
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 18px 34px 20px;
+	border: 3px solid var(--violet);
+	border-radius: 12px;
+	color: var(--violet);
+	text-align: center;
+	text-shadow: 0 0 44px color-mix(in srgb, var(--violet) 55%, transparent);
+	box-shadow: 0 0 34px color-mix(in srgb, var(--violet) 30%, transparent), inset 0 0 34px color-mix(in srgb, var(--violet) 14%, transparent);
+}
+
+.notice-stamp .big
+{
+	padding-left: .14em;
+	font-size: 86px;
+	font-weight: 700;
+	letter-spacing: .14em;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.notice-stamp .small
+{
+	margin-top: 10px;
+	font-family: var(--mono);
+	font-size: 19px;
+	letter-spacing: .12em;
+	line-height: 1.4;
+	text-transform: uppercase;
+}
+
+/* it lands like a stamp: from a little above the paper, at once */
+
+.notice-stamp.fragment
+{
+	opacity: 0;
+	transform: scale(1.5);
+	transition: opacity .12s ease-in, transform .16s cubic-bezier(.6, 0, .9, .4);
+}
+
+.notice-stamp.fragment.shown
+{
+	opacity: 1;
+	transform: scale(1);
+}
+
+/* a link in a slide's text: the text's own colour, a thin line under it (opens in a new tab) */
+
+.slide a
+{
+	color: inherit;
+	text-decoration: none;
+	border-bottom: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+}
+
+.slide a.g
+{
+	color: var(--mint);
+}
+
+.slide a:hover
+{
+	color: var(--mint);
+	border-bottom-color: var(--mint);
+}
+
+/* a station's resources: links for the deck online, a pointer on stage */
+
+.read-more
+{
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 10px 30px;
+	margin: 44px 0 0;
+	font-family: var(--mono);
+	font-size: 20px;
+	letter-spacing: .03em;
+}
+
+.read-more b
+{
+	font-weight: 400;
+	letter-spacing: .22em;
+	color: var(--cyan);
+	text-transform: uppercase;
+}
+
+.read-more a
+{
+	color: var(--text);
+	text-decoration: none;
+	border-bottom: 1px solid var(--border);
+}
+
+.read-more a:hover
+{
+	color: var(--mint);
+	border-bottom-color: var(--mint);
+}
+
+/* a sequence diagram: lanes, lifelines, messages (MemoLock, step by step) */
+
+svg.sequence
+{
+	display: block;
+	width: 100%;
+	height: auto;
+	margin: 28px 0 0;
+}
+
+svg.sequence .seq-box
+{
+	fill: var(--panel);
+	stroke: var(--border);
+	stroke-width: 2;
+}
+
+svg.sequence .seq-box.redis
+{
+	stroke: var(--cyan);
+}
+
+svg.sequence .seq-lane
+{
+	fill: var(--text);
+	font-family: var(--display);
+	font-size: 24px;
+	font-weight: 700;
+	letter-spacing: .12em;
+	text-anchor: middle;
+	text-transform: uppercase;
+}
+
+svg.sequence .seq-life
+{
+	stroke: var(--border);
+	stroke-width: 2;
+	stroke-dasharray: 6 8;
+}
+
+svg.sequence .seq-arrow
+{
+	stroke: var(--muted);
+	stroke-width: 3;
+}
+
+svg.sequence .seq-arrow.good
+{
+	stroke: var(--mint);
+}
+
+svg.sequence .seq-tip
+{
+	fill: var(--muted);
+}
+
+svg.sequence .seq-tip.good
+{
+	fill: var(--mint);
+}
+
+svg.sequence .seq-cmd
+{
+	fill: var(--text);
+	font-family: var(--mono);
+	font-size: 21px;
+	text-anchor: middle;
+}
+
+svg.sequence .seq-say
+{
+	fill: var(--muted);
+	font-family: var(--display);
+	font-size: 24px;
+	font-weight: 500;
+	text-anchor: middle;
+}
+
+svg.sequence .seq-say.left
+{
+	text-anchor: start;
+}
+
+svg.sequence .seq-say.strong
+{
+	fill: var(--mint);
+	font-size: 30px;
+	font-weight: 700;
+}
+
+svg.sequence .seq-note
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 18px;
+	letter-spacing: .04em;
+	text-anchor: middle;
+}
+
+svg.sequence .seq-lock
+{
+	fill: var(--panel);
+	stroke: var(--mint);
+	stroke-width: 2;
+}
+
+svg.sequence .seq-lock-label
+{
+	fill: var(--mint);
+	font-family: var(--mono);
+	font-size: 18px;
+	letter-spacing: .2em;
+	text-anchor: middle;
+	text-transform: uppercase;
+}
+
+svg.sequence .seq-wait
+{
+	fill: var(--yellow);
+	opacity: .55;
+}
+
+svg.sequence .seq-work
+{
+	fill: var(--red);
+	filter: drop-shadow(0 0 6px var(--red-glow));
+}
+
+/* the guard's two marks: a tombstone for a deleted cached page, a stamp for a forgotten tag */
+
+.guard-marks h4
+{
+	margin-bottom: 10px;
+}
+
+.guard-marks ul.points
+{
+	margin-top: 18px;
+	font-size: 32px;
+}
+
+svg.tombstone
+{
+	display: block;
+	width: 250px;
+	height: auto;
+}
+
+svg.tombstone .stone
+{
+	fill: var(--panel);
+	stroke: var(--muted);
+	stroke-width: 4;
+}
+
+svg.tombstone .ground
+{
+	stroke: var(--border);
+	stroke-width: 4;
+}
+
+svg.tombstone .stone-label
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 18px;
+	letter-spacing: .2em;
+	text-anchor: middle;
+	text-transform: uppercase;
+}
+
+svg.tombstone .stone-token
+{
+	fill: var(--text);
+	font-family: var(--mono);
+	font-size: 34px;
+	text-anchor: middle;
+}
+
+.stamp-holder
+{
+	display: flex;
+	align-items: center;
+	height: 160px;
+	padding-left: 30px;
+}
+
+.notice-stamp.tag-stamp
+{
+	opacity: .92;
+}
+
+.notice-stamp.tag-stamp .big
+{
+	font-size: 72px;
+}
+
+/* a heading or a statement on two lines: split evenly, never one word alone on the second */
+
+h2,
+.claim,
+.teaser,
+.statement
+{
+	text-wrap: balance;
+}
+
+/* a chart's axis titles: what the time runs along, what the height means */
+
+svg .axis-title
+{
+	fill: var(--text);
+	font-family: var(--mono);
+	font-size: 17px;
+	letter-spacing: .04em;
+	text-anchor: end;
+	opacity: .8;
+}
+
+svg .axis-title.vertical
+{
+	text-anchor: middle;
+}
+
+/* the ban demo (demos/ban.js): how long Redis took to answer, while a tag is forgotten */
+
+svg.ban .tick
+{
+	stroke: var(--border);
+	stroke-width: 1;
+}
+
+svg.ban .tick-label,
+svg.ban .legend-label
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 18px;
+}
+
+svg.ban .tick-label
+{
+	text-anchor: middle;
+}
+
+svg.ban .cursor
+{
+	stroke: var(--text);
+	stroke-width: 1.5;
+	opacity: .35;
+}
+
+svg.ban .floor
+{
+	stroke: var(--border);
+	stroke-width: 2;
+}
+
+svg.ban .band
+{
+	fill: var(--yellow);
+	opacity: .08;
+}
+
+svg.ban .phase-line
+{
+	stroke: var(--text);
+	stroke-width: 2;
+}
+
+svg.ban .phase-label
+{
+	fill: var(--text);
+	font-family: var(--mono);
+	font-size: 17px;
+}
+
+svg.ban .wait
+{
+	stroke: var(--yellow);
+	stroke-width: 4;
+	stroke-linecap: round;
+	opacity: .8;
+}
+
+svg.ban .done
+{
+	fill: var(--mint);
+	filter: drop-shadow(0 0 5px var(--mint-glow));
+}
+
+svg.ban .panel-label
+{
+	fill: var(--text);
+	font-family: var(--display);
+	font-size: 30px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+}
+
+svg.ban .store-versioned .panel-label
+{
+	fill: var(--mint);
+}
+
+svg.ban .panel-sub
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 18px;
+	letter-spacing: .06em;
+}
+
+svg.ban .stamp-v
+{
+	font-family: var(--display);
+	font-size: 76px;
+	font-weight: 700;
+	text-anchor: middle;
+}
+
+svg.ban .stamp-v.bad
+{
+	fill: var(--red);
+	filter: drop-shadow(0 0 18px var(--red-glow));
+}
+
+svg.ban .stamp-v.good
+{
+	fill: var(--mint);
+	filter: drop-shadow(0 0 18px var(--mint-glow));
+}
+
+svg.ban .stamp-l
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 17px;
+	letter-spacing: .2em;
+	text-anchor: middle;
+}
+
+/* the swr demo (demos/swr.js): the stampede's lanes around the moment a cached page ends */
+
+svg.swr .work.refresh
+{
+	fill: transparent;
+	stroke: var(--red);
+	stroke-width: 2;
+	filter: none;
+}
+
+svg.swr .done.previous
+{
+	fill: var(--text);
+	filter: none;
+}
+
+svg.swr .stamp-v .unit
+{
+	font-size: 38px;
+}
+
+svg.swr .moment,
+svg.fleet .moment
+{
+	stroke: var(--cyan);
+	stroke-width: 2;
+	stroke-dasharray: 6 6;
+}
+
+svg.swr .moment-label,
+svg.fleet .moment-label
+{
+	fill: var(--cyan);
+	font-family: var(--mono);
+	font-size: 17px;
+}
+
+/* the fleet demo (demos/fleet.js): a lane per server, a dot per visitor with its article's version */
+
+svg.fleet .lane-band
+{
+	fill: var(--text);
+	opacity: .035;
+}
+
+svg.fleet .lane-label
+{
+	fill: var(--text);
+	font-family: var(--mono);
+	font-size: 20px;
+	letter-spacing: .1em;
+	text-anchor: end;
+	text-transform: uppercase;
+}
+
+svg.fleet .done.old
+{
+	fill: var(--red);
+	filter: drop-shadow(0 0 6px var(--red-glow));
+}
+
+svg.fleet .version
+{
+	fill: var(--mint);
+	font-family: var(--mono);
+	font-size: 18px;
+	text-anchor: middle;
+}
+
+svg.fleet .version.old
+{
+	fill: var(--red);
+}
+
+/* the file-ban demo (demos/file-ban.js): a bar per number of pages, the time to forget their tag */
+
+svg.file-ban .tick-label.y
+{
+	text-anchor: start;
+}
+
+svg.file-ban .bar
+{
+	fill: var(--red);
+	opacity: .85;
+	filter: drop-shadow(0 0 6px var(--red-glow));
+}
+
+svg.file-ban .bar-label
+{
+	fill: var(--text);
+	font-family: var(--mono);
+	font-size: 18px;
+	text-anchor: middle;
+}
+
+svg.file-ban .trend-line
+{
+	stroke: var(--yellow);
+	stroke-width: 2;
+	stroke-dasharray: 8 8;
+}
+
+svg.file-ban .trend-label
+{
+	fill: var(--yellow);
+	font-family: var(--mono);
+	font-size: 20px;
+}
+
+/* the tags demo (demos/tags.js): the file cache on disk, a card per page and per tag file */
+
+svg.tags-demo .column-title
+{
+	fill: var(--cyan);
+	font-family: var(--mono);
+	font-size: 24px;
+	font-weight: 700;
+}
+
+svg.tags-demo .column-sub,
+svg.tags-demo .file-name
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 17px;
+}
+
+svg.tags-demo .card-box
+{
+	fill: var(--panel);
+	stroke: var(--border);
+	stroke-width: 2;
+	transition: stroke .3s;
+}
+
+svg.tags-demo .card
+{
+	transition: opacity .4s;
+}
+
+svg.tags-demo .card.hit .card-box
+{
+	stroke: var(--mint);
+}
+
+svg.tags-demo .card.lit .card-box
+{
+	stroke: var(--yellow);
+	stroke-width: 3;
+}
+
+svg.tags-demo .card.gone
+{
+	opacity: .3;
+}
+
+svg.tags-demo .card.gone .card-box
+{
+	stroke: var(--red);
+	stroke-dasharray: 8 6;
+}
+
+svg.tags-demo .page-name
+{
+	fill: var(--text);
+	font-family: var(--display);
+	font-size: 28px;
+	font-weight: 700;
+}
+
+svg.tags-demo .chip rect
+{
+	fill: none;
+	stroke: var(--cyan);
+	stroke-width: 1.5;
+}
+
+svg.tags-demo .chip text
+{
+	fill: var(--cyan);
+	font-family: var(--mono);
+	font-size: 16px;
+	text-anchor: middle;
+}
+
+svg.tags-demo .chip.edited rect
+{
+	stroke: var(--yellow);
+}
+
+svg.tags-demo .chip.edited text
+{
+	fill: var(--yellow);
+}
+
+svg.tags-demo .status
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 16px;
+	letter-spacing: .15em;
+	text-anchor: end;
+	text-transform: uppercase;
+}
+
+svg.tags-demo .status.good
+{
+	fill: var(--mint);
+}
+
+svg.tags-demo .status.bad
+{
+	fill: var(--red);
+}
+
+svg.tags-demo .entries
+{
+	font-family: var(--mono);
+	font-size: 19px;
+}
+
+svg.tags-demo .entry
+{
+	fill: var(--text);
+}
+
+svg.tags-demo .entry-gap
+{
+	fill: var(--muted);
+}
+
+svg.tags-demo .entry.dead
+{
+	fill: var(--muted);
+	opacity: .55;
+	text-decoration: line-through;
+}
+
+svg.tags-demo .caption
+{
+	fill: var(--text);
+	font-family: var(--display);
+	font-size: 28px;
+	font-weight: 600;
+}
+
+svg.tags-demo .caption.edit
+{
+	fill: var(--yellow);
+}
+
+svg.tags-demo .caption.bad
+{
+	fill: var(--red);
+}
+
+svg.tags-demo .caption.good
+{
+	fill: var(--mint);
+}
+
+/* the load demo (demos/load.js): a dot per visit at its wait, the visitors on the site behind */
+
+svg.load .tick-label.y
+{
+	text-anchor: start;
+}
+
+svg.load .visitors
+{
+	fill: var(--cyan);
+	opacity: .05;
+}
+
+svg.load .visitors-label
+{
+	fill: var(--cyan);
+	font-family: var(--mono);
+	font-size: 17px;
+	text-anchor: end;
+	opacity: .8;
+}
+
+svg.load .visit
+{
+	fill: var(--mint);
+	opacity: .85;
+}
+
+svg.load .visit.db
+{
+	fill: var(--red);
+}
+
+/* the curve demo (demos/curve.js): log-log, a line per store */
+
+svg.curve .tick-label.y
+{
+	text-anchor: start;
+}
+
+svg.curve .series-line
+{
+	fill: none;
+	stroke-width: 3;
+}
+
+svg.curve .series-name,
+svg.curve .series-value
+{
+	font-family: var(--mono);
+	font-size: 18px;
+}
+
+svg.curve .series-value
+{
+	fill: var(--text);
+	text-anchor: end;
+}
+
+svg.curve .store-file .series-line
+{
+	stroke: var(--text);
+}
+
+svg.curve .store-file .series-dot,
+svg.curve .store-file .series-name
+{
+	fill: var(--text);
+}
+
+svg.curve .store-classic .series-line
+{
+	stroke: var(--red);
+}
+
+svg.curve .store-classic .series-dot,
+svg.curve .store-classic .series-name
+{
+	fill: var(--red);
+}
+
+svg.curve .store-redis .series-line
+{
+	stroke: var(--yellow);
+}
+
+svg.curve .store-redis .series-dot,
+svg.curve .store-redis .series-name
+{
+	fill: var(--yellow);
+}
+
+svg.curve .store-redisearch .series-line
+{
+	stroke: var(--cyan);
+}
+
+svg.curve .store-redisearch .series-dot,
+svg.curve .store-redisearch .series-name
+{
+	fill: var(--cyan);
+}
+
+svg.curve .store-versioned .series-line
+{
+	stroke: var(--mint);
+}
+
+svg.curve .store-versioned .series-dot,
+svg.curve .store-versioned .series-name
+{
+	fill: var(--mint);
+}
+
+/* the race demo (demos/race.js): a cell per round, red when the old page stayed */
+
+svg.race .cell
+{
+	fill: var(--panel-2);
+	stroke: var(--border);
+	stroke-width: 1;
+}
+
+svg.race .cell.stayed
+{
+	fill: var(--red);
+	stroke: none;
+}
+
+svg.race .cell.refused
+{
+	fill: var(--mint);
+	stroke: none;
+	opacity: .55;
+}
+
+svg.race .panel-label
+{
+	fill: var(--text);
+	font-family: var(--display);
+	font-size: 30px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+}
+
+svg.race .mode-on .panel-label
+{
+	fill: var(--mint);
+}
+
+svg.race .panel-sub,
+svg.race .legend-label
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 18px;
+	letter-spacing: .04em;
+}
+
+svg.race .stamp-v
+{
+	font-family: var(--display);
+	font-size: 76px;
+	font-weight: 700;
+	text-anchor: middle;
+}
+
+svg.race .stamp-v.bad
+{
+	fill: var(--red);
+	filter: drop-shadow(0 0 18px var(--red-glow));
+}
+
+svg.race .stamp-v.good
+{
+	fill: var(--mint);
+	filter: drop-shadow(0 0 18px var(--mint-glow));
+}
+
+svg.race .stamp-l
+{
+	fill: var(--muted);
+	font-family: var(--mono);
+	font-size: 17px;
+	letter-spacing: .2em;
+	text-anchor: middle;
+}
+
+/* ?audit: the line content stays above (--safe: the bottom of the screen may hang behind the room) */
+
+.slide > .safe-line
+{
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: var(--safe);
+	z-index: 20;
+	border-top: 2px dashed var(--red);
+	pointer-events: none;
+}

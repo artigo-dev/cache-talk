@@ -1,0 +1,43 @@
+{
+	"name": "marcing/rg-dev-cache",
+	"description": "Teaching Websites When to Forget: the surprising half of caching, with live demos (rg-dev #69)",
+	"type": "project",
+	"license": "MIT",
+	"require": {
+		"php": ">=8.5",
+		"ext-apcu": "*",
+		"ext-pcntl": "*",
+		"ext-redis": "*",
+		"ext-yaml": "*",
+		"ext-zstd": "*",
+		"artigo/cache-stampede": "^2.0.1",
+		"artigo/versioned-cache": "^2.0.4",
+		"ovos/php-library": "dev-release/8.5#f495b55f48c4e0b5f91f66153c9b2f12dcd5b7e6",
+		"ovos/php-module-system": "dev-release/8.5#39ad4846d7bd08a2b8e597168b42628ebb5f6778",
+		"symfony/cache": "^8.1"
+	},
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/ovos/php-library.git",
+			"no-api": true
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/ovos/php-module-system.git",
+			"no-api": true
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"Controllers\\": "application/controllers",
+			"Stores\\": "application/stores",
+			"Talk\\": "libraries/Talk"
+		}
+	},
+	"minimum-stability": "dev",
+	"prefer-stable": true,
+	"config": {
+		"sort-packages": true
+	}
+}

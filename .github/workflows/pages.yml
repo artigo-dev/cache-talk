@@ -1,0 +1,39 @@
+# The deck on GitHub Pages: site/ as it is, nothing built, nothing run.
+# Two jobs, as GitHub's own Pages workflow has it: the deploy job starts once
+# the upload is complete (in one job it sometimes found no artifact yet).
+name: pages
+
+on:
+    push:
+        branches: [main]
+        paths: ['site/**', '.github/workflows/pages.yml']
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+concurrency:
+    group: pages
+    cancel-in-progress: false
+
+jobs:
+    upload:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/configure-pages@v5
+            - uses: actions/upload-pages-artifact@v3
+              with:
+                  path: site
+
+    deploy:
+        needs: upload
+        runs-on: ubuntu-latest
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - id: deployment
+              uses: actions/deploy-pages@v4

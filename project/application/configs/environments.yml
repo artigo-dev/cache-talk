@@ -1,0 +1,120 @@
+# rg-dev / cache — the talk's demo application
+#
+# Environments:
+# * production   — the hosted live mode (TALK[PUBLIC] = yes in its .env)
+# * development  — the laptop: docker compose up
+# * ci           — GitHub Actions, recording the deck's runs
+#
+# The active environment is selected by the ENV key in .env.
+#
+# The `cache:` block below is the talk's hero. Every station of the road is a
+# change to it - `store: Redis`, then `Redisearch`, then `RedisVersioned`;
+# `queue.enabled`; `invalidation_window_ms` - which Talk\Config applies before
+# the Cache service builds its store, and which the slides show as a diff.
+
+production: &production
+  vendor: rg-dev-cache
+  system: &system
+    path: /
+    bootstraps:
+      - path:
+        controller:
+          http: index
+          cli: cli
+    domain: null
+    domains:
+      - localhost
+    protocol: http
+    debug: no
+
+    modules:
+      application:
+        path: application
+        controllers: true
+        translations: false
+        views: false
+        vendor: false
+      # the framework's own module: it renders errors (Controllers\System\Events)
+      system:
+        path: vendor/ovos/php-module-system/application
+        controllers: true
+        translations: true
+        views: true
+
+    services:
+      http:
+        - Events
+        - Logger
+        - Cache
+      cli:
+        - Events
+        - Logger
+        - Cache
+
+    plugins:
+      default:
+        http: []
+        cli: []
+      groups: []
+
+    # php-module-system's commands (system cache …) set append.http
+    profilers: &profilers
+      enabled: no
+      append:
+        http: no
+        cli: no
+
+  connections: &connections
+    redis:
+      type: redis
+      host: !ENV REDIS[HOST]
+      port: !ENV REDIS[PORT]
+      # Redisearch indexes database 0 only
+      database: 0
+      connect_timeout: 2
+      read_timeout: 5
+      read_timeout_long: 60
+
+  # Cache
+  cache: &cache
+    enabled: yes
+    prefix: !ENV CACHE[PREFIX]
+    perishable: &cache-perishable
+      compression:
+        enabled: no
+      queue:
+        enabled: no
+    persistent: &cache-persistent
+      connection: redis
+      store: Redis
+      # the invalidation guard (php-library's default; 0 turns it off). The race demo's run without it
+      # is our classic backend (Talk\Store\RedisClassic), which has none
+      store_options:
+        invalidation_window_ms: 60000
+      # the values are small: the demos measure the stores, not a codec
+      compression:
+        enabled: no
+      queue:
+        enabled: yes
+        connection: redis
+        lock_ttl_ms: 5000
+        wait_attempts: 10
+
+  # The talk's own settings
+  talk: &talk
+    # the scenarios may FLUSHDB the Redis above
+    dedicated: !ENV TALK[DEDICATED]
+    # the hosted live mode: grid-only parameters, one run at a time
+    public: !ENV TALK[PUBLIC]
+
+  cli:
+    executable: php
+
+development: &development
+  <<: *production
+  system:
+    <<: *system
+    debug: yes
+
+ci:
+  <<: *production
