@@ -1053,7 +1053,7 @@ finally
 			<p class="teaser"><span lang="en"><span class="x">Every design so far deletes every cached page it forgets: a million pages, a million deletes.</span> <span class="g">The fix:</span> stop deleting, add an invalidation rule instead.</span><span lang="pl"><span class="x">Dotąd każde podejście kasuje wszystko, co zapomina: milion stron to milion kasowań.</span> <span class="g">Rozwiązanie:</span> zamiast kasować, dodaj regułę unieważnienia.</span></p>
 			<div class="notice-stamp fragment" aria-hidden="true">
 				<span class="big"><span lang="en">Outdated</span><span lang="pl">Nieaktualne</span></span>
-				<span class="small"><span lang="en">everything tagged 42<br>made before 12:05</span><span lang="pl">wszystko z&nbsp;tagiem 42<br>sprzed 12:05</span></span>
+				<span class="small"><span lang="en">everything tagged article-42<br>made before 12:05</span><span lang="pl">wszystko z&nbsp;tagiem article-42<br>sprzed 12:05</span></span>
 			</div>
 		</div>
 		<ul class="points">
@@ -1071,8 +1071,8 @@ finally
 		<h2><span lang="en">Add a rule, <span class="g">throw nothing away</span></span><span lang="pl">Dodaj regułę, <span class="g">nic nie wyrzucaj</span></span></h2>
 		<ol class="sequence">
 			<li><span class="when">12:00</span><span><span lang="en">The front page is saved and stamped "made at 12:00".</span><span lang="pl">Strona główna zapisana ze znacznikiem „zrobiona o&nbsp;12:00”.</span></span></li>
-			<li class="fragment"><span class="when">12:05</span><span><span lang="en">Article 42 changes. One invalidation rule is added: <span class="g">"everything tagged 42, made before 12:05, is outdated"</span>.</span><span lang="pl">Artykuł 42 się zmienia. Dochodzi jedna reguła unieważnienia: <span class="g">„wszystko z&nbsp;tagiem 42 sprzed 12:05 jest nieaktualne”</span>.</span></span></li>
-			<li class="fragment"><span class="when">12:05:01</span><span><span lang="en">A visitor asks for the front page: older than the rule, tagged 42, so <span class="x">outdated</span>. Built again, stamped 12:05:01.</span><span lang="pl">Ktoś otwiera stronę główną: starsza od reguły, z&nbsp;tagiem 42, więc <span class="x">nieaktualna</span>. Wygenerowana od nowa, znacznik 12:05:01.</span></span></li>
+			<li class="fragment"><span class="when">12:05</span><span><span lang="en">Article 42 changes. One invalidation rule is added: <span class="g">"everything tagged article-42, made before 12:05, is outdated"</span>.</span><span lang="pl">Artykuł 42 się zmienia. Dochodzi jedna reguła unieważnienia: <span class="g">„wszystko z&nbsp;tagiem article-42 sprzed 12:05 jest nieaktualne”</span>.</span></span></li>
+			<li class="fragment"><span class="when">12:05:01</span><span><span lang="en">A visitor asks for the front page: older than the rule, tagged article-42, so <span class="x">outdated</span>. Built again, stamped 12:05:01.</span><span lang="pl">Ktoś otwiera stronę główną: starsza od reguły, z&nbsp;tagiem article-42, więc <span class="x">nieaktualna</span>. Wygenerowana od nowa, znacznik 12:05:01.</span></span></li>
 			<li class="fragment"><span class="when">12:06</span><span><span lang="en">The next visitor asks for the front page: newer than every rule, so <span class="g">the same cached page is served</span>.</span><span lang="pl">Kolejna osoba otwiera stronę główną: nowsza od każdej reguły, więc <span class="g">dostaje tę samą stronę z&nbsp;cache</span>.</span></span></li>
 		</ol>
 		<div class="term"><b><span lang="en">invalidation rule</span><span lang="pl">reguła unieważnienia</span></b><span><span lang="en">one line saying which cached pages are outdated: everything with this tag, made before this moment.</span><span lang="pl">jedna linijka o&nbsp;tym, które strony w&nbsp;cache są nieaktualne: wszystko z&nbsp;tym tagiem sprzed tej chwili.</span></span></div>
@@ -1087,9 +1087,9 @@ finally
 		<div class="flow">
 			<div class="box"><span lang="en">Forget a tag<small>invalidateTags(['article-42'])</small></span><span lang="pl">Zapomnienie tagu<small>invalidateTags(['article-42'])</small></span></div>
 			<div class="arrow good"><span lang="en">appends</span><span lang="pl">dopisuje</span></div>
-			<div class="box good"><span lang="en">Stream<small>rule #1301: tag 42</small></span><span lang="pl">Stream<small>reguła #1301: tag 42</small></span></div>
+			<div class="box good"><span lang="en">Stream<small>rule #1301: tag article-42</small></span><span lang="pl">Stream<small>reguła #1301: tag article-42</small></span></div>
 			<div class="arrow"><span lang="en">checked by</span><span lang="pl">sprawdzany przez</span></div>
-			<div class="box"><span lang="en">Read a cached page<small>stamp #1000, tags 42, 7</small></span><span lang="pl">Odczyt z&nbsp;cache<small>znacznik #1000, tagi 42, 7</small></span></div>
+			<div class="box"><span lang="en">Read a cached page<small>stamp #1000, tags article-42, category-7</small></span><span lang="pl">Odczyt z&nbsp;cache<small>znacznik #1000, tagi article-42, category-7</small></span></div>
 		</div>
 		<ul class="points">
 			<li><span lang="en">Forgetting: one rule, a handful of commands, no matter how many cached pages match.</span><span lang="pl">Unieważnienie: jedna reguła, kilka poleceń, bez względu na to, ile stron pasuje.</span></li>
@@ -1280,7 +1280,7 @@ finally
 				<h4 class="g"><span lang="en">A tag forgotten</span><span lang="pl">Zapomniany tag</span></h4>
 				<div class="stamp-holder">
 					<div class="notice-stamp tag-stamp" aria-hidden="true">
-						<span class="big">Tag 42</span>
+						<span class="big">article-42</span>
 						<span class="small"><span lang="en">stamped 12:05:00.000</span><span lang="pl">znacznik 12:05:00.000</span></span>
 					</div>
 				</div>
