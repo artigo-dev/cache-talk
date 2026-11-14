@@ -18,6 +18,11 @@
 		S                replay speed
 		J                English / Polish (the toggle by the slide counter does the same)
 	
+	Touch
+		swipe left       next fragment, then next slide
+		swipe right      back (no swipe while zoomed in: the finger pans the slide then)
+		tap              next (a tap is a click)
+	
 	?all in the URL shows every fragment at once, for reading the deck rather than presenting it.
 	?lang=pl opens it in Polish; otherwise the language last chosen, else English.
 	
@@ -185,6 +190,55 @@ const Deck = (() =>
 			event.preventDefault();
 			previous();
 		});
+	};
+	
+	/** a swipe on a touch screen: to the left the next fragment or slide, to the right back. One finger,
+	    mostly sideways; not while the page is zoomed in (the finger pans the slide then), not in the overview
+	    (the grid scrolls), not from a form field, not when it selected text. Touch events, not pointer events:
+	    the browser cancels a pointer as soon as it takes the move for a pan, and the swipe would be lost.
+	    Passive: pinch-zoom and panning stay the browser's */
+	const followSwipes = () =>
+	{
+		const distance = 50;
+		let start = null;
+		
+		addEventListener('touchstart', (event) =>
+		{
+			const zoomed = (visualViewport?.scale ?? 1) > 1.01;
+			const [touch] = event.touches;
+			start = event.touches.length === 1
+				&& zoomed === false
+				&& document.body.classList.contains('overview') === false
+				&& event.target.closest('input, select, textarea') === null
+				? {x: touch.clientX, y: touch.clientY}
+				: null;
+		}, {passive: true});
+		
+		addEventListener('touchend', (event) =>
+		{
+			const from = start;
+			start = null;
+			// a finger still down: it was a pinch
+			if(from === null || event.touches.length > 0)
+			{
+				return;
+			}
+			
+			const [touch] = event.changedTouches;
+			const dx = touch.clientX - from.x;
+			const dy = touch.clientY - from.y;
+			if(Math.abs(dx) < distance || Math.abs(dx) < 2 * Math.abs(dy) || String(getSelection()) !== '')
+			{
+				return;
+			}
+			
+			dx < 0 ? next() : previous();
+		}, {passive: true});
+		
+		addEventListener('touchcancel', () =>
+		{
+			start = null;
+		}, {passive: true});
 	};
 	
 	/** a click on a station goes to the slide it starts on. Not in the overview: there a click picks the
@@ -990,6 +1044,7 @@ const Deck = (() =>
 		addEventListener('hashchange', () => show(fromHash()));
 		followStations();
 		followClicks();
+		followSwipes();
 		followFootKeys();
 		channel?.addEventListener('message', ({data}) =>
 		{
