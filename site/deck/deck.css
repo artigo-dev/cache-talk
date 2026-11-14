@@ -131,6 +131,8 @@ html, body
 	margin: 0;
 	height: 100%;
 	overflow: hidden;
+	/* a downward drag on a phone does not pull to refresh */
+	overscroll-behavior: none;
 	background: var(--letterbox);
 	color: var(--text);
 	font-family: var(--display);
