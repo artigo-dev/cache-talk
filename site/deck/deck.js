@@ -10,13 +10,17 @@
 		                 Enter or Esc opens it
 		F                fullscreen
 		B / .            blank screen
-		T                light / dark (a projector that washes the dark out)
+		T                light / dark (a projector that washes the dark out); the moon and the sun by
+		                 the slide counter do the same
 		P                the presenter's window: notes, next slide, clocks; there the arrows, R, S,
 		                 L, B and J work as here, sent to the deck
 		R                replay the demo on this slide
 		L                run it live (only where the talk's server answers)
 		S                replay speed
 		J                English / Polish (the toggle by the slide counter does the same)
+		? / H            this list of keys, in a panel over the deck (and the ? by the slide counter);
+		                 Esc, ?, H or a click beside it closes it, any other key closes it and acts.
+		                 Its rows are helpGroups below: a key added here is added there
 	
 	Touch
 		swipe left       next fragment, then next slide
@@ -170,7 +174,7 @@ const Deck = (() =>
 	const followClicks = () =>
 	{
 		const ignored = (event) => document.body.classList.contains('overview')
-			|| event.target.closest('a, button, input, select, textarea, .road') !== null
+			|| event.target.closest('a, button, input, select, textarea, .road, .help') !== null
 			|| String(getSelection()) !== '';
 		
 		addEventListener('click', (event) =>
@@ -194,7 +198,8 @@ const Deck = (() =>
 	
 	/** a swipe on a touch screen: to the left the next fragment or slide, to the right back. One finger,
 	    mostly sideways; not while the page is zoomed in (the finger pans the slide then), not in the overview
-	    (the grid scrolls), not from a form field, not when it selected text. Touch events, not pointer events:
+	    (the grid scrolls), not while the list of keys is open, not from a form field, not when it selected
+	    text. Touch events, not pointer events:
 	    the browser cancels a pointer as soon as it takes the move for a pan, and the swipe would be lost.
 	    Passive: pinch-zoom and panning stay the browser's */
 	const followSwipes = () =>
@@ -209,6 +214,7 @@ const Deck = (() =>
 			start = event.touches.length === 1
 				&& zoomed === false
 				&& document.body.classList.contains('overview') === false
+				&& help.hidden
 				&& event.target.closest('input, select, textarea') === null
 				? {x: touch.clientX, y: touch.clientY}
 				: null;
@@ -727,6 +733,30 @@ const Deck = (() =>
 			return;
 		}
 		
+		// the list of keys: Esc, ? and H close it; any other key closes it and does what it does. Shift on
+		// its way to a ?, and Tab moving inside the list, leave it open
+		if(help.hidden === false)
+		{
+			if(event.key === 'Shift' || event.key === 'Tab')
+			{
+				return;
+			}
+			
+			toggleHelp(false);
+			if(['Escape', '?', 'h', 'H'].includes(event.key))
+			{
+				event.preventDefault();
+				
+				return;
+			}
+		}
+		else if(['?', 'h', 'H'].includes(event.key))
+		{
+			toggleHelp(true);
+			
+			return;
+		}
+		
 		if(/^[0-9]$/.test(event.key))
 		{
 			typed+= event.key;
@@ -912,10 +942,19 @@ const Deck = (() =>
 		{
 			button.title = t(titles[button.dataset.key]);
 		});
-		const toggle = chrome.querySelector('.language');
-		if(toggle)
+		const buttons = {'.language': 'English / Polish (J)', '.theme': 'Dark / light (T)', '.help-toggle': 'Shortcuts (?)'};
+		for(const [selector, text] of Object.entries(buttons))
 		{
-			toggle.title = t('English / Polish (J)');
+			const button = chrome.querySelector(selector);
+			if(button)
+			{
+				button.title = t(text);
+				button.setAttribute('aria-label', t(text));
+			}
+		}
+		if(help.hidden === false)
+		{
+			renderHelp();
 		}
 	};
 	
@@ -947,6 +986,73 @@ const Deck = (() =>
 		}
 	};
 	
+	/* ---- ? and H: the list of keys, the header of this file for whoever has no keyboard or forgot ---- */
+	
+	/** each row: its keys (an array, each in a <kbd>) or its gesture (a text), then what it does */
+	const helpGroups = [
+		['Moving', [
+			[['→', '↓', 'Space', 'PgDn'], 'next fragment, then next slide'],
+			[['←', '↑', 'PgUp', 'Backspace'], 'back'],
+			[['Home', 'End'], 'first / last slide'],
+			[['0–9', 'Enter'], 'the slide with that number'],
+			[['O'], 'every slide at once; a click or Enter opens one'],
+		]],
+		['Screen', [
+			[['F'], 'full screen'],
+			[['B', '.'], 'blank screen'],
+			[['T'], 'dark / light'],
+			[['J'], 'English / Polish'],
+			[['P'], 'the presenter\'s window: notes, next slide, clocks'],
+			[['?', 'H'], 'this list'],
+		]],
+		['Demos', [
+			[['R'], 'replay the demo on this slide'],
+			[['S'], 'replay speed'],
+			[['L'], 'run it live (only where the talk\'s server answers)'],
+		]],
+		['Mouse and touch', [
+			['click, tap', 'next'],
+			['right click', 'back'],
+			['swipe left', 'next'],
+			['swipe right', 'back'],
+		]],
+	];
+	
+	const help = Object.assign(document.createElement('div'), {className: 'help', hidden: true});
+	
+	/** the list in the language on screen: built when it opens, again when the language changes */
+	const renderHelp = () =>
+	{
+		const keys = (names) => names.map((name) => `<kbd>${name === 'Space' ? t('Space') : name}</kbd>`).join(' ');
+		const row = ([what, does]) => `<dt>${Array.isArray(what) ? keys(what) : `<span class="gesture">${t(what)}</span>`}</dt><dd>${t(does)}</dd>`;
+		const group = ([name, rows]) => `<section><div class="help-group">${t(name)}</div><dl>${rows.map(row).join('')}</dl></section>`;
+		help.innerHTML = `
+			<div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="help-title" tabindex="-1">
+				<div class="help-title" id="help-title">${t('Shortcuts')}</div>
+				<button type="button" class="help-close" title="${t('Close (Esc)')}" aria-label="${t('Close (Esc)')}">×</button>
+				<div class="help-groups">${helpGroups.map(group).join('')}</div>
+				<p class="help-foot">${t('Esc, ? or a click beside this list closes it')}</p>
+			</div>`;
+	};
+	
+	const toggleHelp = (force = null) =>
+	{
+		const open = force ?? help.hidden;
+		if(open)
+		{
+			renderHelp();
+		}
+		help.hidden = open === false;
+		if(open)
+		{
+			help.querySelector('.help-panel').focus();
+		}
+	};
+	
+	/** the moon and the sun of the theme toggle: drawn, so they need no Polish */
+	const moon = '<svg viewBox="0 0 16 16" aria-hidden="true"><path class="solid" d="M14 8.53A6 6 0 1 1 7.47 2a4.67 4.67 0 0 0 6.53 6.53Z"/></svg>';
+	const sun = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle class="solid" cx="8" cy="8" r="3"/><path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.05 3.05l1.13 1.13M11.82 11.82l1.13 1.13M3.05 12.95l1.13-1.13M11.82 4.18l1.13-1.13"/></svg>';
+	
 	/* ---- start ---- */
 	
 	const chrome = document.createElement('div');
@@ -977,7 +1083,7 @@ const Deck = (() =>
 		}
 		
 		chrome.className = 'chrome';
-		chrome.innerHTML = '<button type="button" class="language"><span class="en">EN</span> · <span class="pl">PL</span></button><span class="count"></span>';
+		chrome.innerHTML = `<button type="button" class="help-toggle">?</button><button type="button" class="theme"><span class="dark">${moon}</span> · <span class="light">${sun}</span></button><button type="button" class="language"><span class="en">EN</span> · <span class="pl">PL</span></button><span class="count"></span>`;
 		findStations();
 		addMiniRoads();
 		addDemoFeet();
@@ -1003,6 +1109,25 @@ const Deck = (() =>
 		{
 			event.currentTarget.blur();
 			switchLanguage();
+		});
+		chrome.querySelector('.theme').addEventListener('click', (event) =>
+		{
+			event.currentTarget.blur();
+			toggleTheme();
+		});
+		chrome.querySelector('.help-toggle').addEventListener('click', (event) =>
+		{
+			event.currentTarget.blur();
+			toggleHelp(true);
+		});
+		// the list closes from its × or a click beside its panel; a click on it never moves the deck
+		document.body.append(help);
+		help.addEventListener('click', (event) =>
+		{
+			if(event.target === help || event.target.closest('.help-close') !== null)
+			{
+				toggleHelp(false);
+			}
 		});
 		document.querySelectorAll('pre.code').forEach(highlight);
 		slides.forEach((slide, at) => slide.addEventListener('click', (event) =>

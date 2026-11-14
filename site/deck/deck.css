@@ -841,9 +841,10 @@ html[lang="en"] [lang="pl"]
 	display: none !important;
 }
 
-/* EN · PL by the slide counter: the language on screen lit */
+/* by the slide counter: ? (the list of keys), the moon and the sun (the theme on screen lit), EN · PL (the
+   language on screen lit) */
 
-.chrome .language
+.chrome button
 {
 	padding: 2px 4px;
 	border: 0;
@@ -854,16 +855,237 @@ html[lang="en"] [lang="pl"]
 	cursor: pointer;
 }
 
-.chrome .language span
+.chrome button:hover,
+.chrome button:focus-visible
+{
+	color: var(--text);
+}
+
+.chrome .language span,
+.chrome .theme span
 {
 	opacity: .55;
 }
 
 html[lang="en"] .chrome .language .en,
-html[lang="pl"] .chrome .language .pl
+html[lang="pl"] .chrome .language .pl,
+html:not([data-theme="light"]) .chrome .theme .dark,
+html[data-theme="light"] .chrome .theme .light
 {
 	opacity: 1;
 	color: var(--text);
+}
+
+.chrome svg
+{
+	width: 1.2em;
+	height: 1.2em;
+	vertical-align: -.25em;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.5;
+	stroke-linecap: round;
+}
+
+.chrome svg .solid
+{
+	fill: currentColor;
+	stroke: none;
+}
+
+.chrome .help-toggle
+{
+	min-width: 1.6em;
+	padding: 0 5px;
+	border: 1px solid currentColor;
+	border-radius: 4px;
+	line-height: 1.4;
+	letter-spacing: 0;
+}
+
+/* a finger, not a mouse: bigger buttons, and no hover to bring the chrome out */
+
+@media (pointer: coarse)
+{
+	.chrome
+	{
+		gap: 10px;
+		font-size: 15px;
+		opacity: .8;
+	}
+	
+	.chrome button
+	{
+		padding: 8px 6px;
+	}
+	
+	.chrome .help-toggle
+	{
+		padding: 4px 9px;
+	}
+}
+
+/* ? or H: the list of keys, over the deck, in the screen's pixels rather than the slide's (readable on a
+   phone); it scrolls inside itself when the screen is short */
+
+.help
+{
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	background: color-mix(in srgb, var(--letterbox) 72%, transparent);
+}
+
+.help[hidden]
+{
+	display: none;
+}
+
+.help-panel
+{
+	position: relative;
+	width: min(1000px, 100%);
+	max-height: 100%;
+	overflow: auto;
+	overscroll-behavior: contain;
+	padding: 26px 32px 20px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: var(--panel);
+	color: var(--text);
+	box-shadow: 0 0 34px color-mix(in srgb, var(--mint) 18%, transparent);
+}
+
+.help-panel:focus
+{
+	outline: none;
+}
+
+.help-title
+{
+	margin: 0 40px 20px 0;
+	font-family: var(--mono);
+	font-size: 14px;
+	letter-spacing: .24em;
+	text-transform: uppercase;
+	color: var(--mint);
+}
+
+.help-close
+{
+	position: absolute;
+	top: 14px;
+	right: 14px;
+	width: 34px;
+	height: 34px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: none;
+	font: 20px/1 var(--mono);
+	color: var(--muted);
+	cursor: pointer;
+}
+
+.help-close:hover,
+.help-close:focus-visible
+{
+	border-color: var(--muted);
+	color: var(--text);
+}
+
+.help-groups
+{
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
+	gap: 22px 44px;
+}
+
+.help-group
+{
+	margin-bottom: 8px;
+	font-family: var(--mono);
+	font-size: 12px;
+	letter-spacing: .16em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+.help dl
+{
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 7px 16px;
+	align-items: baseline;
+	margin: 0;
+}
+
+.help dt
+{
+	font-family: var(--mono);
+	font-size: 13px;
+	white-space: nowrap;
+}
+
+.help dd
+{
+	margin: 0;
+	font-size: 18px;
+	line-height: 1.25;
+}
+
+.help kbd
+{
+	display: inline-block;
+	min-width: 1.8em;
+	padding: 1px 6px;
+	border: 1px solid var(--border);
+	border-bottom-width: 2px;
+	border-radius: 4px;
+	background: var(--panel-2);
+	font-family: var(--mono);
+	font-size: 13px;
+	text-align: center;
+	color: var(--text);
+}
+
+.help .gesture
+{
+	color: var(--mint);
+}
+
+.help-foot
+{
+	margin: 20px 0 0;
+	font-family: var(--mono);
+	font-size: 12px;
+	letter-spacing: .06em;
+	color: var(--muted);
+}
+
+/* a phone: each key above what it does */
+
+@media (max-width: 520px)
+{
+	.help-panel
+	{
+		padding: 20px 18px 16px;
+	}
+	
+	.help dl
+	{
+		grid-template-columns: 1fr;
+		gap: 2px;
+	}
+	
+	.help dd
+	{
+		margin-bottom: 8px;
+		font-size: 17px;
+	}
 }
 
 .blank .slide
@@ -1036,7 +1258,8 @@ aside.notes
 		transform: none;
 	}
 	
-	.chrome
+	.chrome,
+	.help
 	{
 		display: none;
 	}
