@@ -151,7 +151,7 @@ Deck.register('stampede', (element) =>
 			
 			const stampX = labelWidth + lanesWidth + 40 + stampWidth / 2;
 			const calls = make('text', {x: stampX, y: top + panelHeight / 2 + 10, class: `stamp-v ${segment.mode === 'memolock' ? 'good' : 'bad'}`}, group);
-			make('text', {x: stampX, y: top + panelHeight / 2 + 50, class: 'stamp-l'}, group).textContent = Deck.t('ORIGIN CALLS');
+			make('text', {x: stampX, y: top + panelHeight / 2 + 50, class: 'stamp-l'}, group).textContent = Deck.t('DATABASE CALLS');
 			const behind = make('text', {x: stampX, y: top + panelHeight / 2 + 82, class: 'stamp-l'}, group);
 			
 			return {segment, shapes, calls, behind};
@@ -162,7 +162,7 @@ Deck.register('stampede', (element) =>
 		[
 			['work', Deck.t('working: asking the database')],
 			['wait', Deck.t('waiting: not asking the database')],
-			['done', Deck.t('the user sees the result')],
+			['done', Deck.t('the visitor sees the result')],
 		].forEach(([kind, text], row) =>
 		{
 			const y = height - 40 - 70 + row * 30;

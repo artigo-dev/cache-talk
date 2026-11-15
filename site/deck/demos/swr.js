@@ -148,7 +148,7 @@ Deck.register('swr', (element) =>
 			const label = Deck.t(segment.label);
 			make('text', {x: 0, y: top + 34, class: 'panel-label'}, group).textContent = label.split(' (')[0];
 			const details = label.includes('(') ? label.slice(label.indexOf('(') + 1, -1) : '';
-			[details, Deck.t('{n} visitors · a build takes {ms} ms', {n: lanes.length, ms: segment.originMs})].filter(Boolean).forEach((line, row) =>
+			[details, Deck.t('{n} visitors', {n: lanes.length}), Deck.t('a build takes {ms} ms', {ms: segment.originMs})].filter(Boolean).forEach((line, row) =>
 			{
 				make('text', {x: 0, y: top + 66 + row * 30, class: 'panel-sub'}, group).textContent = line;
 			});

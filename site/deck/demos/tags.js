@@ -7,14 +7,18 @@
 	visitor opens every page again. Entries on other lists that point to a
 	deleted page are dimmed: the lists still name them.
 
-	The run takes milliseconds: it is played a step at a time (800 ms a step
-	at the deck's ×0.1), the line under the columns saying what happens. */
+	The run takes milliseconds, so it is not played on a clock: its steps are
+	fragments of the slide (an empty marker per step), and → shows the next
+	one like any fragment, ← takes it back. The stage draws the state after
+	as many steps as are shown, the line under the columns saying what the
+	last one did ("4 / 12 · …"). The presenter's window follows, ?all shows
+	the end. */
 
 Deck.register('tags', (element) =>
 {
 	const stage = element.querySelector('.demo-stage');
 	const svgNs = 'http://www.w3.org/2000/svg';
-	let frame = 0;
+	let current = null;
 	
 	const make = (name, attributes = {}, parent = null) =>
 	{
@@ -31,13 +35,28 @@ Deck.register('tags', (element) =>
 	
 	const reset = () =>
 	{
-		cancelAnimationFrame(frame);
 		stage.innerHTML = '';
 	};
 	
 	const short = (file) => `${file.slice(0, 10)}…`;
 	
-	const play = (events, pace = 0.1) =>
+	/** an empty fragment per step, kept across replays so the slide remembers how far it is */
+	const mark = (count) =>
+	{
+		const markers = [...element.querySelectorAll('.demo-step')];
+		for(let at = markers.length; at < count; at++)
+		{
+			const marker = document.createElement('span');
+			marker.className = 'fragment demo-step';
+			marker.hidden = true;
+			element.append(marker);
+		}
+		
+		markers.slice(count).forEach((marker) => marker.remove());
+	};
+	
+	/** the stage after the first `shown` steps of a run */
+	const draw = (events, shown) =>
 	{
 		reset();
 		const segment = events.find((event) => event.type === 'segment');
@@ -141,10 +160,10 @@ Deck.register('tags', (element) =>
 				const saved = events.find((other) => other.type === 'saved' && other.key === event.key && other.round === event.round);
 				steps.push({
 					text: event.hit
-						? Deck.t('a visitor opens {key}: still cached', {key: event.key})
+						? Deck.t('a visitor opens "{key}" page: still cached', {key: event.key})
 						: event.round === 1
-							? Deck.t('a visitor opens {key}: not cached, so built and saved, and added to the lists of its tags', {key: event.key})
-							: Deck.t('a visitor opens {key}: its file is gone, so it is built again, with the new article', {key: event.key}),
+							? Deck.t('a visitor opens "{key}" page: not cached, so built and saved, and added to the lists of its tags', {key: event.key})
+							: Deck.t('a visitor opens "{key}" page: its file is gone, so it is built again, with the new article', {key: event.key}),
 					kind: event.hit ? 'good' : event.round === 1 ? '' : 'good',
 					apply: () =>
 					{
@@ -209,28 +228,29 @@ Deck.register('tags', (element) =>
 			}
 		}
 		
-		const stepMs = 80 / pace;
-		let applied = 0;
-		const startedAt = performance.now();
-		const draw = () =>
-		{
-			const due = Math.min(steps.length, Math.floor((performance.now() - startedAt) / stepMs) + 1);
-			for(; applied < due; applied++)
-			{
-				const step = steps[applied];
-				step.apply();
-				caption.textContent = `${applied + 1} · ${step.text}`;
-				caption.setAttribute('class', `caption ${step.kind}`);
-			}
-			
-			if(applied < steps.length)
-			{
-				frame = requestAnimationFrame(draw);
-			}
-		};
-		
-		frame = requestAnimationFrame(draw);
+		mark(steps.length);
+		const done = Math.min(shown, steps.length);
+		steps.slice(0, done).forEach((step) => step.apply());
+		const last = steps[done - 1];
+		caption.textContent = last ? `${done} / ${steps.length} · ${last.text}` : '';
+		caption.setAttribute('class', `caption ${last?.kind ?? ''}`);
 	};
 	
-	return {play, reset};
+	/** a run, recorded or live: drawn as far as the slide's shown steps reach (the deck's pace does not apply) */
+	const play = (events) =>
+	{
+		current = events;
+		draw(events, element.querySelectorAll('.demo-step.shown').length);
+	};
+	
+	/** the deck, after → or ←: draw this many steps */
+	const step = (shown) =>
+	{
+		if(current !== null)
+		{
+			draw(current, shown);
+		}
+	};
+	
+	return {play, step, reset};
 });

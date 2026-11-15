@@ -36,16 +36,32 @@ use function unlink;
  * Forgetting one tag in a file cache, as the cached pages grow: the tag's
  * list is read, and every file on it is deleted - one at a time.
  *
- * Per number of pages a worker of its own: it fills Talk\Store\File with the
- * pages, all carrying one tag (not drawn), forgets the tag in one
- * invalidateTags() call and times it, then checks the pages are gone. The
- * files are on tmpfs, in memory: a real disk is slower.
+ * Per number of pages and per medium a worker of its own: it fills
+ * Talk\Store\File with the pages, all carrying one tag (not drawn), forgets
+ * the tag in one invalidateTags() call and times it, then checks the pages
+ * are gone. Two media, the same pages on both, in turn: tmpfs, in memory
+ * (the best case), and a disk - compose.yaml's talk-disk volume, the Docker
+ * VM's ext4, whose virtual disk is on the laptop's SSD.
  */
 class FileBan extends Scenario
 {
 	protected const string TAG = 'article-42';
 	
-	protected const string DIR = '/tmp/talk/file-ban';
+	/**
+	 * Where each medium keeps its files
+	 */
+	protected const array MEDIA = [
+		'memory' => '/tmp/talk/file-ban',
+		'disk' => '/var/talk-disk/file-ban',
+	];
+	
+	/**
+	 * What the deck calls each medium: its name, then (after " · ") the lines under it
+	 */
+	protected const array LABELS = [
+		'memory' => 'in memory (tmpfs) · best case scenario',
+		'disk' => 'on disk (ext4) · the laptop\'s SSD',
+	];
 	
 	public function name(): string
 	{
@@ -67,30 +83,38 @@ class FileBan extends Scenario
 		$redis = Config::redis();
 		$counts = array_map('intval', explode(',', (string)$params['pages']));
 		sort($counts);
-		$sink->emit([
-			'type' => 'segment',
-			't' => 0,
-			'mode' => 'file',
-			'label' => 'File cache (Talk\Store\File · tmpfs)',
-			'pages' => $counts,
-		]);
+		foreach(static::MEDIA as $medium => $dir)
+		{
+			$sink->emit([
+				'type' => 'segment',
+				't' => 0,
+				'mode' => $medium,
+				'label' => static::LABELS[$medium],
+				'pages' => $counts,
+			]);
+		}
 		
+		// every number of pages on both media in turn, so whatever drifts during the run drifts for both
 		$events = new Buffer($sink);
 		foreach($counts as $pages)
 		{
-			Env::flush($redis);
-			$run = $this->runId();
-			try
+			foreach(static::MEDIA as $medium => $dir)
 			{
-				(new Fleet($events, $redis, 600))->run($this->name(), $run, 1, [
-					'pages' => $pages,
-				], [
-					'mode' => 'file',
-				]);
-			}
-			finally
-			{
-				static::removeDir(static::DIR . '/' . $run);
+				Env::flush($redis);
+				$run = $this->runId();
+				try
+				{
+					(new Fleet($events, $redis, 600))->run($this->name(), $run, 1, [
+						'pages' => $pages,
+						'dir' => $dir,
+					], [
+						'mode' => $medium,
+					]);
+				}
+				finally
+				{
+					static::removeDir($dir . '/' . $run);
+				}
 			}
 		}
 		
@@ -102,7 +126,7 @@ class FileBan extends Scenario
 	): void
 	{
 		$pages = (int)$job['pages'];
-		$dir = static::DIR . '/' . (string)$job['run'];
+		$dir = (string)$job['dir'] . '/' . (string)$job['run'];
 		$store = static::store($dir);
 		Barrier::arrive(Config::redis(), (string)$job['run']);
 		
@@ -139,16 +163,35 @@ class FileBan extends Scenario
 	): void
 	{
 		$times = [];
-		$left = 0;
+		$left = [];
 		foreach($events->events() as $event)
 		{
 			if($event['type'] === 'forgotten')
 			{
-				$times[(int)$event['pages']] = (float)$event['ms'];
-				$left+= (int)$event['left'];
+				$medium = (string)$event['mode'];
+				$times[$medium][(int)$event['pages']] = (float)$event['ms'];
+				$left[$medium] = ($left[$medium] ?? 0) + (int)$event['left'];
 			}
 		}
 		
+		foreach(array_keys(static::MEDIA) as $medium)
+		{
+			$this->summariseMedium($sink, $medium, $times[$medium] ?? [], $left[$medium] ?? 0);
+		}
+	}
+	
+	/**
+	 * One medium's times: the median time per page, and the claims
+	 *
+	 * @param array<int, float> $times the time to forget the tag, by the number of pages
+	 */
+	protected function summariseMedium(
+		Sink $sink,
+		string $medium,
+		array $times,
+		int $left,
+	): void
+	{
 		$perPage = [];
 		foreach($times as $pages => $ms)
 		{
@@ -160,15 +203,15 @@ class FileBan extends Scenario
 		$sink->emit([
 			'type' => 'summary',
 			't' => Events::now(),
-			'mode' => 'file',
+			'mode' => $medium,
 			'times' => $times,
 			'usPerPage' => round($median, 3),
 		]);
 		
-		$this->check($sink, $times !== [] && $left === 0, sprintf('every cached page is gone after every ban (%d files left)', $left));
+		$this->check($sink, $times !== [] && $left === 0, sprintf('%s: every cached page is gone after every ban (%d files left)', $medium, $left));
 		$smallest = $times === [] ? 0 : min(array_keys($times));
 		$largest = $times === [] ? 0 : max(array_keys($times));
-		$this->check($sink, $largest > $smallest && $times[$largest] > $times[$smallest] * ($largest / $smallest) / 3, sprintf('the time grows with the pages: %s for %d, %s for %d', static::duration($times[$smallest] ?? 0.0), $smallest, static::duration($times[$largest] ?? 0.0), $largest));
+		$this->check($sink, $largest > $smallest && $times[$largest] > $times[$smallest] * ($largest / $smallest) / 3, sprintf('%s: the time grows with the pages: %s for %d, %s for %d', $medium, static::duration($times[$smallest] ?? 0.0), $smallest, static::duration($times[$largest] ?? 0.0), $largest));
 	}
 	
 	protected static function duration(

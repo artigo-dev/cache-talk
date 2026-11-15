@@ -1429,6 +1429,29 @@ aside.notes
 	text-transform: uppercase;
 }
 
+/* several terms on one slide: stacked where a single one sits, their names in one column */
+
+.terms
+{
+	position: absolute;
+	left: 140px;
+	right: 140px;
+	bottom: calc(1080px - var(--safe) + 60px);
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.terms .term
+{
+	position: static;
+}
+
+.terms .term b
+{
+	width: 200px;
+}
+
 /* two columns: before / after, problem / fix */
 
 .columns
@@ -2563,6 +2586,71 @@ svg.file-ban .trend-label
 	fill: var(--yellow);
 	font-family: var(--mono);
 	font-size: 20px;
+}
+
+/* the two media: memory (tmpfs, the best case) cyan, disk red */
+
+svg.file-ban .bar.memory,
+svg.file-ban .swatch.memory
+{
+	fill: var(--cyan);
+	filter: drop-shadow(0 0 6px color-mix(in srgb, var(--cyan) 40%, transparent));
+}
+
+svg.file-ban .swatch.disk
+{
+	fill: var(--red);
+}
+
+/* a pair's labels lean away from each other: memory's ends at its bar's right edge, disk's starts at its bar's left edge */
+
+svg.file-ban .bar-label.memory
+{
+	text-anchor: end;
+}
+
+svg.file-ban .bar-label.disk
+{
+	text-anchor: start;
+}
+
+svg.file-ban .trend-line.memory
+{
+	stroke: var(--cyan);
+}
+
+svg.file-ban .trend-line.disk
+{
+	stroke: var(--red);
+}
+
+svg.file-ban .trend-label.memory
+{
+	fill: var(--cyan);
+}
+
+svg.file-ban .trend-label.disk
+{
+	fill: var(--red);
+}
+
+svg.file-ban .stamp-v.memory
+{
+	fill: var(--cyan);
+	filter: drop-shadow(0 0 18px color-mix(in srgb, var(--cyan) 45%, transparent));
+}
+
+svg.file-ban .stamp-v.disk
+{
+	fill: var(--red);
+	filter: drop-shadow(0 0 18px var(--red-glow));
+}
+
+svg.file-ban .legend-name
+{
+	fill: var(--text);
+	font-family: var(--mono);
+	font-size: 18px;
 }
 
 /* the tags demo (demos/tags.js): the file cache on disk, a card per page and per tag file */

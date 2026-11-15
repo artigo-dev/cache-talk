@@ -36,9 +36,15 @@ services:
         tmpfs:
             - /tmp/talk:size=4g
         # `php cli.php demo record` writes the deck's recordings straight
-        # into the repository
+        # into the repository; talk-disk is the file ban's disk, next to its
+        # tmpfs: the Docker VM's ext4, whose virtual disk is on the laptop's SSD
         volumes:
             - ./site/data:/app/site/data
+            - talk-disk:/var/talk-disk
         depends_on:
             redis:
                 condition: service_healthy
+
+volumes:
+    # the file ban's disk (see app)
+    talk-disk:

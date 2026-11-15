@@ -280,7 +280,7 @@ const Deck = (() =>
 				demo.insertAdjacentHTML('beforeend', `
 					<div class="demo-foot">
 						<span class="source"></span>
-						<span class="keys"><button type="button" data-key="replay"><kbd>R</kbd> <span lang="en">replay</span><span lang="pl">powtórz</span></button> · <button type="button" data-key="speed"><kbd>S</kbd> <span lang="en">speed</span><span lang="pl">tempo</span></button><span class="live-only"> · <button type="button" data-key="live"><kbd>L</kbd> <span lang="en">live</span><span lang="pl">na żywo</span></button></span></span>
+						<span class="keys"><button type="button" data-key="replay"><kbd>R</kbd> <span lang="en">replay</span><span lang="pl">powtórz</span></button> · <button type="button" data-key="speed"><kbd>S</kbd> <span lang="en">speed</span><span lang="pl">prędkość</span></button><span class="live-only"> · <button type="button" data-key="live"><kbd>L</kbd> <span lang="en">live</span><span lang="pl">na żywo</span></button></span></span>
 					</div>`);
 			}
 		}
@@ -347,8 +347,8 @@ const Deck = (() =>
 				.map((rect) => ({top: (rect.top - top) / scale, bottom: (rect.bottom - top) / scale}));
 			const all = boxes([...slide.querySelectorAll('*')]);
 			// what is pinned to the floor (the term box, the mini road), and what flows from the top down to it
-			const pinned = boxes([...slide.querySelectorAll('.term, .road.mini')]);
-			const flowing = boxes([...slide.querySelectorAll('*')].filter((element) => element.closest('.term, .road.mini, .demo') === null));
+			const pinned = boxes([...slide.querySelectorAll('.terms, .term, .road.mini')]);
+			const flowing = boxes([...slide.querySelectorAll('*')].filter((element) => element.closest('.terms, .term, .road.mini, .demo') === null));
 			const floor = Math.min(safeHeight, ...pinned.map((box) => box.top));
 			
 			return {
@@ -375,10 +375,13 @@ const Deck = (() =>
 		slides.forEach((slide, at) => slide.classList.toggle('current', at === index));
 		
 		const slide = slides[index];
+		// the demos first: a stepped demo adds its steps to the slide as fragments
+		enterDemos(slide);
 		const all = fragments(slide);
 		// ?all: every fragment shown, for reading the deck rather than presenting it
 		const count = step < 0 || params.has('all') ? all.length : step;
 		all.forEach((fragment, at) => fragment.classList.toggle('shown', at < count));
+		stepDemos(slide);
 		
 		if(embedded === false)
 		{
@@ -386,7 +389,6 @@ const Deck = (() =>
 		}
 		
 		chrome.querySelector('.count').textContent = `${index + 1} / ${slides.length}`;
-		enterDemos(slide);
 		broadcast();
 	};
 	
@@ -397,6 +399,7 @@ const Deck = (() =>
 		if(hidden)
 		{
 			hidden.classList.add('shown');
+			stepDemos(slide);
 			broadcast();
 			
 			return;
@@ -412,6 +415,7 @@ const Deck = (() =>
 		if(shown.length > 0)
 		{
 			shown.at(-1).classList.remove('shown');
+			stepDemos(slide);
 			broadcast();
 			
 			return;
@@ -666,6 +670,15 @@ const Deck = (() =>
 			{
 				replay(demo);
 			}
+		}
+	};
+	
+	/** a stepped demo (the tags) draws as many of its steps as are shown: they are fragments, so → and ← step through it */
+	const stepDemos = (slide) =>
+	{
+		for(const element of slide.querySelectorAll('.demo[data-demo]'))
+		{
+			mounted.get(element)?.view.step?.(element.querySelectorAll('.fragment.shown').length);
 		}
 	};
 	
