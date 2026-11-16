@@ -226,11 +226,11 @@ class RedisClassic extends Tags
 		}
 		
 		$sets = array_map(fn(string $tag): string => $this->tagIdsPrefix . $tag, $tags);
-		$this->step("reading the tag's list of pages", true);
+		$this->step("reading the tag's list", true);
 		$ids = $matching === self::MATCHING_ALL
 			? $this->redis->sInter(...$sets)
 			: $this->redis->sUnion(...$sets);
-		$this->step("reading the tag's list of pages", false);
+		$this->step("reading the tag's list", false);
 		
 		return $this->removeMultiple(is_array($ids) ? $ids : [], $matching, $tags);
 	}

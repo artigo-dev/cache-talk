@@ -4,7 +4,9 @@ declare(strict_types=1);
 /*
  * Forgetting a million pages: the same ban for every design, on one machine.
  * The shape of php-library's README ("Bans"): 1 000 tags with 1 000 pages
- * each (64-byte values, one tag per page), forgotten 50 tags per call.
+ * each (one tag per page), forgotten 50 tags per call. Every page holds
+ * 1 KB of random text, as the deck's demos do (Talk\Scenario::PAGE_BYTES):
+ * 64-byte values fit Redis's compact small hash, the cheapest thing to delete.
  *
  *   classic     the classic design as Cm_Cache_Backend_Redis runs it with
  *               use_lua off: a hash per page (zc:k:<id>), a set per tag
@@ -43,17 +45,23 @@ use Ovos\Application;
 use Ovos\Store;
 use Ovos\Store\Mysql\Traits\CacheService;
 use Redis;
+use RedisException;
 use RuntimeException;
 use Talk\Config;
 use Talk\Store\RedisClassic;
 
 use function array_chunk;
+use function array_column;
 use function array_map;
+use function array_slice;
+use function array_sum;
+use function bin2hex;
 use function count;
 use function define;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
+use function getenv;
 use function hrtime;
 use function in_array;
 use function intdiv;
@@ -61,17 +69,24 @@ use function json_decode;
 use function json_encode;
 use function min;
 use function number_format;
+use function parse_str;
 use function pcntl_fork;
 use function pcntl_waitpid;
 use function printf;
+use function random_bytes;
 use function random_int;
 use function range;
 use function sort;
 use function sprintf;
-use function str_repeat;
+use function str_contains;
+use function str_replace;
+use function substr;
 use function touch;
+use function uasort;
 use function unlink;
 use function usleep;
+
+use const PHP_EOL;
 
 define('BASE_DIR', '/app/project/');
 require BASE_DIR . 'init.php';
@@ -101,7 +116,7 @@ $tagCount = (int)($argv[2] ?? 1000);
 $perTag = (int)($argv[3] ?? 1000);
 $perCall = (int)($argv[4] ?? 50);
 $garbage = (int)($argv[5] ?? 0);
-$value = str_repeat('x', 64);
+$value = bin2hex(random_bytes(512));
 $tags = array_map(static fn(int $t): string => 'tag-' . $t, range(0, $tagCount - 1));
 
 // Cm_Cache_Backend_Redis::LUA_CLEAN_SCRIPT, verbatim
@@ -197,29 +212,69 @@ $memory = (int)$redis->info('memory')['used_memory'];
 
 // 2. the ban: every tag, $perCall per call, while a second client PINGs all along: how long everyone else waits
 $stopFile = '/tmp/ban-probe.stop';
+$readyFile = '/tmp/ban-probe.ready';
 $resultFile = '/tmp/ban-probe.json';
 @unlink($stopFile);
+@unlink($readyFile);
 @unlink($resultFile);
 $probe = pcntl_fork();
 if($probe === 0)
 {
 	$client = Config::redis(60.0);
 	$waits = [];
-	while(file_exists($stopFile) === false)
+	$busy = 0;
+	do
 	{
 		$sent = hrtime(true);
-		$client->ping();
+		// a script running past busy-reply-threshold (5 s) makes Redis answer BUSY instead of
+		// queueing the PING: it is asked again until answered, the wait counted from the first ask
+		while(true)
+		{
+			try
+			{
+				$client->ping();
+				
+				break;
+			}
+			catch(RedisException $exception)
+			{
+				if(str_contains($exception->getMessage(), 'BUSY') === false)
+				{
+					throw $exception;
+				}
+				$busy++;
+				usleep(10_000);
+			}
+		}
 		$waits[] = (hrtime(true) - $sent) / 1e6;
+		// the ban starts once the probe has its first answer: a ban shorter than the probe's start
+		// (the versioned store's, under a millisecond) would otherwise leave it without a sample
+		if(count($waits) === 1)
+		{
+			touch($readyFile);
+		}
 	}
+	while(file_exists($stopFile) === false);
 	sort($waits);
 	file_put_contents($resultFile, json_encode([
 		'p50' => $waits[intdiv(count($waits), 2)],
 		'p99' => $waits[(int)(count($waits) * 0.99)],
 		'max' => $waits[count($waits) - 1],
+		'busy' => $busy,
 	]));
 	exit(0);
 }
+while(file_exists($readyFile) === false)
+{
+	usleep(10_000);
+}
 usleep(200_000);
+// BAN_STATS=1: Redis's own account of the ban (INFO commandstats), what the time went into
+$stats = getenv('BAN_STATS') === '1';
+if($stats)
+{
+	$redis->config('RESETSTAT');
+}
 $started = hrtime(true);
 foreach(array_chunk($tags, $perCall) as $chunk)
 {
@@ -251,6 +306,22 @@ foreach(array_chunk($tags, $perCall) as $chunk)
 	$redis->exec();
 }
 $banS = (hrtime(true) - $started) / 1e9;
+if($stats)
+{
+	$rows = [];
+	foreach($redis->info('commandstats') as $name => $line)
+	{
+		parse_str(str_replace(',', '&', $line), $fields);
+		$rows[substr($name, 8)] = [(int)$fields['calls'], (float)$fields['usec']];
+	}
+	uasort($rows, static fn(array $a, array $b): int => $b[1] <=> $a[1]);
+	$busy = array_sum(array_column($rows, 1)) / 1e6;
+	printf("  stats: wall %.2f s, Redis busy %.2f s%s", $banS, $busy, PHP_EOL);
+	foreach(array_slice($rows, 0, 8, true) as $name => [$calls, $usec])
+	{
+		printf("  stats: %-22s %9d calls %8.0f ms%s", $name, $calls, $usec / 1000, PHP_EOL);
+	}
+}
 touch($stopFile);
 pcntl_waitpid($probe, $status);
 $ping = json_decode((string)file_get_contents($resultFile), true);
@@ -271,7 +342,7 @@ if($left > 0)
 }
 
 printf(
-	"| %s (%s) | %s pages, %s tags, %d per call, %s expired names in the lists | filled in %.1f s, %s MB | **ban %.2f s** | PING p50 / p99 / max %.1f / %.1f / %.1f ms | 200 of 200 sampled pages gone |
+	"| %s (%s) | %s pages, %s tags, %d per call, %s expired names in the lists | filled in %.1f s, %s MB | **ban %.2f s** | PING p50 / p99 / max %.1f / %.1f / %.1f ms, %d BUSY replies | 200 of 200 sampled pages gone |
 ",
 	$design,
 	$store === null ? ['classic' => 'Cm_Cache_Backend_Redis, no Lua', 'classic-lua' => 'Cm_Cache_Backend_Redis, Lua'][$design] : $store::class,
@@ -285,4 +356,5 @@ printf(
 	$ping['p50'],
 	$ping['p99'],
 	$ping['max'],
+	$ping['busy'],
 );

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5ddd924da05dd43ad8beedea572cf6c6",
+    "content-hash": "4807b06fcdd54b35c109e63d94f9923a",
     "packages": [
         {
             "name": "artigo/cache-stampede",
@@ -229,12 +229,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ovos/php-library.git",
-                "reference": "f495b55f48c4e0b5f91f66153c9b2f12dcd5b7e6"
+                "reference": "c6e3a2509c13a18a96efc4ebde0075593b10748b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ovos/php-library/zipball/f495b55f48c4e0b5f91f66153c9b2f12dcd5b7e6",
-                "reference": "f495b55f48c4e0b5f91f66153c9b2f12dcd5b7e6",
+                "url": "https://api.github.com/repos/ovos/php-library/zipball/c6e3a2509c13a18a96efc4ebde0075593b10748b",
+                "reference": "c6e3a2509c13a18a96efc4ebde0075593b10748b",
                 "shasum": ""
             },
             "require": {
@@ -286,7 +286,7 @@
             ],
             "description": "A batteries-included MVC framework and infrastructure toolkit for modern PHP: a cache that never stampedes (MemoLock), lazy RedisJSON sessions, filesystem routing, relations as attributes with zero N+1, a live profiler and a self-wiring DI container.",
             "homepage": "https://github.com/ovos/php-library",
-            "time": "2026-11-12T18:06:54+00:00"
+            "time": "2026-11-16T00:39:43+00:00"
         },
         {
             "name": "ovos/php-module-system",

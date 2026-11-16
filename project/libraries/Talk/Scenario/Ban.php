@@ -31,7 +31,6 @@ use function range;
 use function round;
 use function sort;
 use function sprintf;
-use function str_repeat;
 use function usleep;
 
 /**
@@ -43,7 +42,8 @@ use function usleep;
  * the tag in one invalidateTags() call, and VISITORS visitors, a process each,
  * arrive at even intervals across the ban and each reads a cached page. When
  * did each one ask, when did it get its answer? A worker is a fresh process,
- * so every store is built from its own configuration.
+ * so every store is built from its own configuration. Every page holds
+ * PAGE_BYTES (1 KB) of random text, as a real one would.
  *
  * - classic: our classic backend (Talk\Store\RedisClassic, the CMS's, an
  *   older fork of Colin Mollenhour's design) - a hash per page, a set per
@@ -82,8 +82,8 @@ class Ban extends Scenario
 	 * the visitors' arrivals are spread over that, so they cover the whole ban
 	 */
 	protected const array MS_PER_PAGE = [
-		'classic' => 0.0019,
-		'redis' => 0.0054,
+		'classic' => 0.0027,
+		'redis' => 0.0057,
 		'redisearch' => 0.0052,
 		'versioned' => 0.0,
 	];
@@ -140,7 +140,7 @@ class Ban extends Scenario
 				'pages' => $pages,
 			]);
 			
-			$redis->set(static::VISITOR_KEY, str_repeat('x', 64));
+			$redis->set(static::VISITOR_KEY, static::pageBody());
 			$span = max(static::MIN_SPAN_MS, $pages * static::MS_PER_PAGE[$kind] * 1.15);
 			
 			$events = new Buffer($sink);
@@ -234,7 +234,7 @@ class Ban extends Scenario
 		int $pages,
 	): int
 	{
-		$value = str_repeat('x', 64);
+		$value = static::pageBody();
 		
 		// the classic backend's own writes, through a pipeline (save() would take two round trips a page)
 		if($store instanceof RedisClassic)

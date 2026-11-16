@@ -196,8 +196,8 @@ Deck.register('swr', (element) =>
 			['work', Deck.t('building: its visitor waits')],
 			['refresh', Deck.t('building after the answer')],
 			['wait', Deck.t('waiting')],
-			['done', Deck.t('answered: a fresh page')],
-			['previous', Deck.t('answered: the previous page')],
+			['done', Deck.t('answered: a fresh version')],
+			['previous', Deck.t('answered: the previous version')],
 		].forEach(([kind, text], row) =>
 		{
 			const ly = height - axisHeight - 132 + row * 28;
@@ -244,7 +244,7 @@ Deck.register('swr', (element) =>
 				
 				stamp(panel.value, now >= hi ? panel.longest : waited);
 				panel.rebuilds.textContent = built === 1 ? Deck.t('{n} REBUILD', {n: built}) : Deck.t('{n} REBUILDS', {n: built});
-				panel.previous.textContent = Deck.t('PREVIOUS PAGE: {n}', {n: previous});
+				panel.previous.textContent = Deck.t('PREVIOUS VERSION: {n}', {n: previous});
 			}
 			
 			if(now < hi)

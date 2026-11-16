@@ -1429,7 +1429,7 @@ aside.notes
 	text-transform: uppercase;
 }
 
-/* several terms on one slide: stacked where a single one sits, their names in one column */
+/* several terms on one slide: stacked where a single one sits, their names in one column as wide as the widest */
 
 .terms
 {
@@ -1437,19 +1437,18 @@ aside.notes
 	left: 140px;
 	right: 140px;
 	bottom: calc(1080px - var(--safe) + 60px);
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	row-gap: 12px;
 }
 
 .terms .term
 {
 	position: static;
-}
-
-.terms .term b
-{
-	width: 200px;
+	display: grid;
+	grid-column: 1 / -1;
+	grid-template-columns: subgrid;
+	column-gap: 26px;
 }
 
 /* two columns: before / after, problem / fix */
@@ -1696,6 +1695,42 @@ ol.sequence li .when
 {
 	max-width: none;
 	font-size: 24px;
+}
+
+/* a code block's label in a plain two-column slide (slide 48: php-library, then Symfony), as in .code-columns */
+
+.columns h4.code-head
+{
+	margin: 0 0 12px;
+	font-size: 22px;
+	color: var(--cyan);
+	letter-spacing: .3em;
+}
+
+.columns pre.code + h4.code-head
+{
+	margin-top: 44px;
+}
+
+.columns h4.code-head + pre.code
+{
+	margin-top: 0;
+}
+
+/* a second block in the same column (slide 43: php-library, then Symfony): its heading clear of the first */
+
+.code-columns pre.code + h4
+{
+	margin-top: 30px;
+}
+
+/* a code block that needs every line it has: less air around and between its lines */
+
+pre.code.tight
+{
+	padding-top: 24px;
+	padding-bottom: 24px;
+	line-height: 1.32;
 }
 
 /* the left code is the longer one (Lua inside Redis, beside the PHP that calls it) */
@@ -2586,6 +2621,13 @@ svg.file-ban .trend-label
 	fill: var(--yellow);
 	font-family: var(--mono);
 	font-size: 20px;
+}
+
+/* a table's label cell broken where the text says (<br>), never inside a line */
+
+table.data td.label
+{
+	white-space: nowrap;
 }
 
 /* the two media: memory (tmpfs, the best case) cyan, disk red */

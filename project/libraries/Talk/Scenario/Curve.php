@@ -34,7 +34,6 @@ use function range;
 use function rmdir;
 use function round;
 use function sprintf;
-use function str_repeat;
 use function unlink;
 
 /**
@@ -44,7 +43,8 @@ use function unlink;
  * Per store a worker of its own, Redis emptied first: one fill with a tag
  * per size on pages of its own (tag-10 on 10 pages, tag-100 on 100, ...),
  * then each tag forgotten in one call, smallest first, timed, and 20 of its
- * pages sampled: gone, or outdated.
+ * pages sampled: gone, or outdated. Every page holds PAGE_BYTES (1 KB) of
+ * random text, as a real one would.
  *
  * - file: Talk\Store\File, capped at FILE_MAX
  * - classic: our classic backend, Talk\Store\RedisClassic (SUNION, then one
@@ -172,7 +172,7 @@ class Curve extends Scenario
 		array $sizes,
 	): void
 	{
-		$value = str_repeat('x', 64);
+		$value = static::pageBody();
 		
 		// RediSearch's index is created on first use: before the first page, or it fills in the background
 		if($store instanceof File === false && $store instanceof RedisClassic === false)

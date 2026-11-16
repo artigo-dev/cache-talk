@@ -7,6 +7,7 @@ use LogicException;
 use RuntimeException;
 
 use function bin2hex;
+use function intdiv;
 use function random_bytes;
 use function sprintf;
 
@@ -18,6 +19,15 @@ use function sprintf;
  */
 abstract class Scenario
 {
+	/**
+	 * What a cached page holds where a scenario measures forgetting: about a
+	 * product model after compression (slide 26: ~2.6 KB, 48-51 %). Random,
+	 * so no store's compression (from 2 KB) shrinks it, and past the 64 bytes
+	 * up to which Redis keeps a small hash in its compact form - the cheapest
+	 * thing to delete, and no real page fits in it
+	 */
+	protected const int PAGE_BYTES = 1024;
+	
 	abstract public function name(): string;
 	
 	/**
@@ -89,5 +99,16 @@ abstract class Scenario
 	protected function runId(): string
 	{
 		return bin2hex(random_bytes(4));
+	}
+	
+	/**
+	 * One cached page's body, PAGE_BYTES of hex text, the same for every page
+	 * of the process
+	 */
+	protected static function pageBody(): string
+	{
+		static $body = null;
+		
+		return $body ??= bin2hex(random_bytes(intdiv(static::PAGE_BYTES, 2)));
 	}
 }
