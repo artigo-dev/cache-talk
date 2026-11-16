@@ -77,7 +77,7 @@ window.DeckPolish = {
 	'one invalidateTags() call': 'jedno invalidateTags()',
 	
 	// ban
-	'This run has no such store.': 'W tym przebiegu nie ma takiego store\'u.',
+	'This run has no such store.': 'W tym przebiegu nie ma takiego store\'a.',
 	'time since forgetting began →': 'czas od początku zapominania →',
 	'A classic Redis backend (in one go)': 'Klasyczny backend Redis (naraz)',
 	'php-library Redis (in batches · Lua)': 'php-library Redis (porcjami · Lua)',
@@ -93,7 +93,7 @@ window.DeckPolish = {
 	'FORGETTING…': 'ZAPOMINANIE…',
 	
 	// curve
-	'This run has no stores.': 'W tym przebiegu nie ma żadnego store\'u.',
+	'This run has no stores.': 'W tym przebiegu nie ma żadnego store\'a.',
 	'{n} M': '{n} mln',
 	'time to forget it': 'czas zapominania',
 	'One tag': 'Jeden tag',
@@ -138,7 +138,7 @@ window.DeckPolish = {
 	'a query takes {min}–{max} ms': 'zapytanie trwa {min}–{max} ms',
 	'AVERAGE WAIT': 'ŚREDNI CZAS OCZEKIWANIA',
 	'LONGEST: {d}': 'NAJDŁUŻSZY: {d}',
-	'DATABASE QUERIES: {n}': 'ZAPYTAŃ DO BAZY: {n}',
+	'DATABASE QUERIES: {n}': 'ZAPYTANIA DO BAZY: {n}',
 	'a visit that asked the database': 'wizyta, która odpytała bazę',
 	'a visit the cache answered': 'wizyta obsłużona z cache',
 	'visitors on the site': 'odwiedzający w serwisie',

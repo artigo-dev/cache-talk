@@ -122,9 +122,12 @@ Deck.register('stampede', (element) =>
 			make('text', {x: 0, y: top + 34, class: 'panel-label'}, group).textContent = label.split(' (')[0];
 			// the label's details ("flock, per host · checks every 100 ms"): one line each, then the run's size
 			const details = label.includes('(') ? label.slice(label.indexOf('(') + 1, -1).split(' · ') : [];
-			const size = segment.hosts === 1
-				? Deck.t('{n} requests · {hosts} server', {n: lanes.length, hosts: segment.hosts})
-				: Deck.t('{n} requests · {hosts} servers', {n: lanes.length, hosts: segment.hosts});
+			// the servers the requests ran on, counted from the requests: every mode
+			// spreads them over the same servers, also where the lock ignores them
+			const hosts = new Set(lanes.map((lane) => lane.host)).size;
+			const size = hosts === 1
+				? Deck.t('{n} requests · {hosts} server', {n: lanes.length, hosts})
+				: Deck.t('{n} requests · {hosts} servers', {n: lanes.length, hosts});
 			[...details, size].forEach((line, row) =>
 			{
 				make('text', {x: 0, y: top + 66 + row * 30, class: 'panel-sub'}, group).textContent = line;

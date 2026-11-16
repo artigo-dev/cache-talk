@@ -1691,6 +1691,19 @@ ol.sequence li .when
 	letter-spacing: .3em;
 }
 
+/* code columns that share their slide with two definitions (stale-while-revalidate, stale-if-error):
+   closer to the title, and the points closer to them */
+
+.columns.code-columns.snug
+{
+	margin-top: 28px;
+}
+
+.columns.code-columns.snug + ul.points
+{
+	margin-top: 30px;
+}
+
 .code-columns pre.code
 {
 	max-width: none;
@@ -1898,6 +1911,15 @@ table.data tr.hl td
 {
 	flex-basis: 13px;
 	padding-right: 0;
+}
+
+/* the last two stations' names end where the road ends instead of running past it: they overflow to
+   the left (slide 75: „Miękkie unieważnienie”) */
+
+.road.mini .station:nth-last-child(-n+2)
+{
+	display: flex;
+	justify-content: flex-end;
 }
 
 .road.mini .station.here

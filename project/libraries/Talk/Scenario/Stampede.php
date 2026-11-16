@@ -100,7 +100,8 @@ class Stampede extends Scenario
 				'mode' => $mode,
 				'label' => static::LABELS[$mode],
 				'workers' => $workers,
-				'hosts' => $mode === 'lockregistry' ? $hosts : 1,
+				// every mode runs on the same servers; only LockRegistry's lock depends on them
+				'hosts' => $hosts,
 				'originMs' => (int)$params['originMs'],
 			]);
 			

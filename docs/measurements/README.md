@@ -7,7 +7,7 @@ Run in the talk's containers (`docker compose up -d` in `rg-dev/cache`):
       docker compose cp docs/measurements/trips.php app:/tmp/trips.php
       docker compose exec app php /tmp/trips.php 100000
 
-- `zbench.php`: deflate, gzip and zstd 3 on ~50 KB HTML (the zstd slide's page row): the generated fragment of versioned-cache's `benchmarks/marshaller.php` against real pages, and the fixed cost of one call.
+- `zbench.php`: deflate, gzip and zstd 3 on ~50 KB HTML (the codesafe home page and this deck's HTML, which the zstd slide's notes quote; the slide's own page row, a 335 KB page, is the Symfony Cache documentation from the table of symfony/symfony#68083): the generated fragment of versioned-cache's `benchmarks/marshaller.php` against real pages, and the fixed cost of one call.
 
       sed -n '302,428p' <versioned-cache>/benchmarks/marshaller.php | sed '1i <?php' > zgen.php
       docker compose cp zgen.php app:/tmp/zgen.php
