@@ -148,9 +148,14 @@ window.DeckPolish = {
 	'php-library Redis (the guard)': 'php-library Redis (strażnik)',
 	'{n} rounds': '{n} rund',
 	'the edit always mid-build': 'edycja zawsze w trakcie generowania',
+	'{n} with an edit mid-build': '{n} z edycją w trakcie',
 	'OLD PAGES STAYED': 'STARE STRONY W CACHE',
+	'OF {n} EDITS MID-BUILD': 'NA {n} EDYCJI W TRAKCIE',
 	'the old page stayed in the cache': 'stara strona została w cache',
 	'its save was refused': 'zapis odrzucony',
+	'no edit: cached as built': 'bez edycji: trafia do cache',
+	'edit: the old page stayed': 'edycja: stara strona została',
+	'edit: its save was refused': 'edycja: zapis odrzucony',
 	
 	// stampede
 	'This run has no such segment.': 'W tym przebiegu nie ma takiego segmentu.',

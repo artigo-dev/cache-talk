@@ -1,12 +1,16 @@
-/*	A slow page, a fast edit: 1 000 rounds, each one forcing the race.
+/*	A slow page, a fast edit: 1 000 rounds, the editor saving mid-build in one
+	round of ten, picked at random (in every round in recordings made before
+	that: their rounds have no "race" field).
 
 	A panel per mode, the rounds as a grid of cells filling in order:
 
-	red   the old page stayed in the cache
-	mint  its save was refused: the next visitor gets the new text
+	gray  no edit: the page was cached as built
+	red   an edit mid-build, and the old page stayed in the cache
+	mint  an edit mid-build, and its save was refused: the next visitor gets
+	      the new text
 
-	The stamp counts the old pages that stayed. The rounds take a few hundred
-	milliseconds; they are drawn over three seconds. */
+	The stamp counts the old pages that stayed, of the edits mid-build. The
+	rounds take a few hundred milliseconds; they are drawn over three seconds. */
 
 Deck.register('race', (element) =>
 {
@@ -51,7 +55,9 @@ Deck.register('race', (element) =>
 			
 			if(event.type === 'round')
 			{
-				segment.rounds.push(event.stayed);
+				// a recording without "race" forced it in every round
+				const race = event.race ?? true;
+				segment.rounds.push(race ? (event.stayed ? 'stayed' : 'refused') : 'calm');
 			}
 			if(event.type === 'summary')
 			{
@@ -105,7 +111,11 @@ Deck.register('race', (element) =>
 			}
 			
 			const details = label.includes('(') ? label.slice(label.indexOf('(') + 1, -1).split(' · ') : [];
-			[...details, Deck.t('{n} rounds', {n: segment.rounds.length.toLocaleString('en').replace(/,/g, ' ')}), Deck.t('the edit always mid-build')].forEach((line, row) =>
+			const races = segment.rounds.filter((kind) => kind !== 'calm').length;
+			const edits = races === segment.rounds.length
+				? Deck.t('the edit always mid-build')
+				: Deck.t('{n} with an edit mid-build', {n: races.toLocaleString('en').replace(/,/g, ' ')});
+			[...details, Deck.t('{n} rounds', {n: segment.rounds.length.toLocaleString('en').replace(/,/g, ' ')}), edits].forEach((line, row) =>
 			{
 				make('text', {x: 0, y: top + titleBelow + 66 + row * 30, class: 'panel-sub'}, group).textContent = line;
 			});
@@ -122,18 +132,25 @@ Deck.register('race', (element) =>
 			const middle = top + panelHeight / 2;
 			const count = make('text', {x: stampX, y: middle + 8, class: `stamp-v ${segment.summary?.stayed > 0 ? 'bad' : 'good'}`}, group);
 			make('text', {x: stampX, y: middle + 46, class: 'stamp-l'}, group).textContent = Deck.t('OLD PAGES STAYED');
-			
+			if(races < segment.rounds.length)
+			{
+				make('text', {x: stampX, y: middle + 76, class: 'stamp-l'}, group).textContent = Deck.t('OF {n} EDITS MID-BUILD', {n: races.toLocaleString('en').replace(/,/g, ' ')});
+			}
+
 			return {segment, cells, count};
 		});
-		
-		// a legend under the last panel's labels
+
+		// a legend under the last panel's labels; the gray cell only when some rounds had no edit
+		const calm = segments.some((segment) => segment.rounds.includes('calm'));
+		const entries = [
+			...(calm ? [['calm', Deck.t('no edit: cached as built')]] : []),
+			['stayed', Deck.t(calm ? 'edit: the old page stayed' : 'the old page stayed in the cache')],
+			['refused', Deck.t(calm ? 'edit: its save was refused' : 'its save was refused')],
+		];
 		const legend = make('g', {class: 'legend'}, svg);
-		[
-			['stayed', Deck.t('the old page stayed in the cache')],
-			['refused', Deck.t('its save was refused')],
-		].forEach(([kind, text], row) =>
+		entries.forEach(([kind, text], row) =>
 		{
-			const ly = height - 40 + row * 30;
+			const ly = height - 40 - (entries.length - 2) * 30 + row * 30;
 			make('rect', {x: 0, y: ly - 16, width: 18, height: 18, class: `cell ${kind}`}, legend);
 			make('text', {x: 34, y: ly, class: 'legend-label'}, legend).textContent = text;
 		});
@@ -150,9 +167,9 @@ Deck.register('race', (element) =>
 				{
 					if(round < shown)
 					{
-						const old = panel.segment.rounds[round];
-						rect.setAttribute('class', `cell ${old ? 'stayed' : 'refused'}`);
-						stayed+= old ? 1 : 0;
+						const kind = panel.segment.rounds[round];
+						rect.setAttribute('class', `cell ${kind}`);
+						stayed+= kind === 'stayed' ? 1 : 0;
 					}
 				});
 				panel.count.textContent = stayed.toLocaleString('en').replace(/,/g, ' ');

@@ -3112,6 +3112,15 @@ svg.race .cell.refused
 	opacity: .55;
 }
 
+/* a round without an edit: the page cached as built, nothing to see */
+
+svg.race .cell.calm
+{
+	fill: var(--muted);
+	stroke: none;
+	opacity: .28;
+}
+
 svg.race .panel-label
 {
 	fill: var(--text);
