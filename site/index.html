@@ -307,7 +307,7 @@ $store->invalidateTags(['article-42']);</pre>
 		<div class="word"><span class="a"><span lang="en">One</span><span lang="pl">Jeden</span></span> <span class="b"><span lang="en">shared cache server</span><span lang="pl">wspólny serwer cache</span></span></div>
 		<div class="road" data-here="5"></div>
 		<p class="teaser"><span lang="en"><span class="x">Files forget slowly, and every server keeps its own.</span> <span class="g">The fix for both:</span> one shared place, an in-memory store like Redis, Valkey or ElastiCache.</span><span lang="pl"><span class="x">Pliki zapominają powoli, a&nbsp;każdy serwer ma własne.</span> <span class="g">Oba problemy załatwia</span> jeden wspólny cache w&nbsp;pamięci, jak Redis, Valkey czy ElastiCache.</span></p>
-		<ul class="points">
+		<ul class="points leads">
 			<li><span lang="en"><span class="g">One cached page for all servers:</span> an edit is forgotten everywhere at once.</span><span lang="pl"><span class="g">Jedna kopia dla wszystkich serwerów:</span> po edycji znika wszędzie naraz.</span></li>
 			<li><span lang="en"><span class="g">Memory instead of files:</span> deleting a cached page is far faster than deleting a file.</span><span lang="pl"><span class="g">Pamięć zamiast plików:</span> kasowanie z&nbsp;pamięci jest dużo szybsze niż kasowanie plików.</span></li>
 		</ul>
@@ -438,7 +438,7 @@ maxmemory-policy volatile-lru</pre>
 		<div class="word"><span class="a"><span lang="en">Smaller</span><span lang="pl">Mniejsze</span></span> <span class="b"><span lang="en">cached pages</span><span lang="pl">strony w&nbsp;cache</span></span></div>
 		<div class="road" data-here="6"></div>
 		<p class="teaser"><span lang="en"><span class="x">Memory is not endless.</span> <span class="g">The fix:</span> compress every cached page.</span><span lang="pl"><span class="x">Pamięć nie jest z&nbsp;gumy.</span> <span class="g">Rozwiązanie:</span> kompresja każdej strony.</span></p>
-		<ul class="points">
+		<ul class="points leads">
 			<li><span lang="en"><span class="g">Half the memory or less:</span> twice as many cached pages fit, or more.</span><span lang="pl"><span class="g">Najwyżej połowa pamięci:</span> zmieści się co najmniej dwa razy więcej stron.</span></li>
 			<li><span lang="en"><span class="g">zstd instead of gzip:</span> the same size, decompressed faster on every read.</span><span lang="pl"><span class="g">zstd zamiast gzip:</span> ten sam rozmiar, szybsza dekompresja przy każdym odczycie.</span></li>
 		</ul>
@@ -928,28 +928,33 @@ return 0</pre>
 		<h2><span lang="en">The same lock <span class="g">for a thumbnail</span></span><span lang="pl">Ta sama blokada <span class="g">dla miniatury</span></span></h2>
 		<div class="columns table-left">
 			<div>
-				<pre class="code" data-lang="php">
-// a new photo is published, 50 visitors open the gallery at once
-$memoLock->lockAndQueue(
-    'thumbnails:' . $file,
+				<h4 class="code-head">php-library</h4>
+				<pre class="code tight" data-lang="php">
+// a new photo, 50 visitors open the gallery at once
+$memoLock->lockAndQueue('thumbnails:' . $file,
     // after waiting: is the thumbnail there now?
     fetcher: fn() => file_exists($thumbnail) ? true : null,
     // only the request that has the lock makes it
-    resolver: fn() => $this->generateThumbnail($file),
-);
+    resolver: fn() => $this->generateThumbnail($file));
 $memoLock->releaseActiveLock('thumbnails:' . $file);</pre>
+				<h4 class="code-head">Symfony: artigo/cache-stampede</h4>
+				<pre class="code tight" data-lang="php">
+// the same; the lock is released for you
+$lock->once('thumbnails:' . $file,
+    exists: fn() => is_file($thumbnail) ? $thumbnail : null,
+    make: fn() => $this->generateThumbnail($file));</pre>
 			</div>
 			<div>
 				<ul class="points">
 					<li class="fragment"><span lang="en"><span class="g">One request resizes the photo;</span> the other 49 wait for the message, then find the file.</span><span lang="pl"><span class="g">Jedno żądanie skaluje zdjęcie,</span> pozostałe 49 czeka na wiadomość i&nbsp;zastaje gotowy plik.</span></li>
-					<li class="fragment"><span lang="en"><span class="g">Anything expensive and the same for everyone:</span> a thumbnail, a PDF, a token from an API, an import.</span><span lang="pl"><span class="g">Wszystko, co drogie i&nbsp;dla każdego takie samo:</span> miniatura, PDF, token z&nbsp;API, import.</span></li>
+					<li class="fragment"><span lang="en"><span class="g">Anything expensive and the same for everyone:</span> a thumbnail, a PDF, a token from an API, an import.</span><span lang="pl"><span class="g">Wszystko, co kosztowne i&nbsp;dla każdego takie samo:</span> miniatura, PDF, token z&nbsp;API, import.</span></li>
 				</ul>
 			</div>
 		</div>
 		<div class="term"><b><span lang="en">thumbnail</span><span lang="pl">miniatura</span></b><span><span lang="en">a small preview image, made from the full photo.</span><span lang="pl">mały podgląd zrobiony z&nbsp;pełnego zdjęcia.</span></span></div>
 		<aside class="notes">
-			<p><span lang="en">MemoLock is not tied to the cache: the cache store uses it, but it works on its own for any work that is expensive and gives the same result for everyone. The example is php-library's own (README.MEMOLOCK.md, "Standalone MemoLock"): without the lock, 50 requests resize the same 20 MB photo at once, 50 times the CPU and the memory; with it, one does, the others wait for the message and find the file.</span><span lang="pl">MemoLock nie jest przywiązany do cache: store z&nbsp;niego korzysta, ale MemoLock działa też samodzielnie, przy każdej pracy, która jest droga i&nbsp;daje wszystkim ten sam wynik. Przykład pochodzi z&nbsp;dokumentacji php-library (README.MEMOLOCK.md, „Standalone MemoLock”): bez blokady 50 żądań naraz skaluje to samo zdjęcie 20&nbsp;MB – 50 razy więcej CPU i&nbsp;pamięci; z&nbsp;blokadą robi to jedno, a&nbsp;reszta czeka na wiadomość i&nbsp;znajduje gotowy plik.</span></p>
-			<p><span lang="en">The fetcher is asked after the wait, and once more right after the lock is taken, so a file that appeared just before is not made again. Without a fetcher, lockAndQueue() is a plain mutex: one at a time (a critical section, an import that must never run twice at once). Simplified on the slide: the real fetcher clears PHP's stat cache before file_exists().</span><span lang="pl">Fetcher jest pytany po czekaniu i&nbsp;jeszcze raz zaraz po wzięciu blokady, żeby nie robić drugi raz pliku, który pojawił się chwilę wcześniej. Bez fetchera lockAndQueue() to zwykły mutex: jeden naraz (sekcja krytyczna, import, który nigdy nie może ruszyć dwa razy jednocześnie). Na slajdzie jest to uproszczone: prawdziwy fetcher przed file_exists() czyści stat cache PHP.</span></p>
+			<p><span lang="en">MemoLock is not tied to the cache: the cache store uses it, but it works on its own for any work that is expensive and gives the same result for everyone. The example is php-library's own (README.MEMOLOCK.md, "Standalone MemoLock"): without the lock, 50 requests resize the same 20 MB photo at once, 50 times the CPU and the memory; with it, one does, the others wait for the message and find the file.</span><span lang="pl">MemoLock nie jest przywiązany do cache: store z&nbsp;niego korzysta, ale MemoLock działa też samodzielnie, przy każdej pracy, która jest kosztowna i&nbsp;daje wszystkim ten sam wynik. Przykład pochodzi z&nbsp;dokumentacji php-library (README.MEMOLOCK.md, „Standalone MemoLock”): bez blokady 50 żądań naraz skaluje to samo zdjęcie 20&nbsp;MB – 50 razy więcej CPU i&nbsp;pamięci; z&nbsp;blokadą robi to jedno, a&nbsp;reszta czeka na wiadomość i&nbsp;znajduje gotowy plik.</span></p>
+			<p><span lang="en">The fetcher is asked after the wait, and once more right after the lock is taken, so a file that appeared just before is not made again. Without a fetcher, lockAndQueue() is a plain mutex: one at a time (a critical section, an import that must never run twice at once). Simplified on the slide: the real fetcher clears PHP's stat cache before file_exists(). In Symfony, artigo/cache-stampede's once() is the same pattern: exists is asked before any lock is taken, again after every wake-up, and the lock is released (and the waiters woken) even when make throws. For a plain mutex, symfony/lock is the better tool; once() is for waiters that want the result.</span><span lang="pl">Fetcher jest pytany po czekaniu i&nbsp;jeszcze raz zaraz po wzięciu blokady, żeby nie robić drugi raz pliku, który pojawił się chwilę wcześniej. Bez fetchera lockAndQueue() to zwykły mutex: jeden naraz (sekcja krytyczna, import, który nigdy nie może ruszyć dwa razy jednocześnie). Na slajdzie jest to uproszczone: prawdziwy fetcher przed file_exists() czyści stat cache PHP. W&nbsp;Symfony to samo robi once() z&nbsp;artigo/cache-stampede: exists jest pytane przed wzięciem blokady i&nbsp;po każdym obudzeniu, a&nbsp;blokada jest zwalniana (i&nbsp;czekający budzeni) nawet wtedy, gdy make rzuci wyjątek. Do zwykłego mutexa lepsze jest symfony/lock; once() jest dla tych, którzy czekają na wynik.</span></p>
 		</aside>
 	</section>
 
@@ -972,9 +977,9 @@ $lock->exclusively('import:companies',
 			</div>
 			<div>
 				<ul class="points">
-					<li class="fragment"><span lang="en"><span class="g">No cached value at all:</span> just the lock, one runner at a time, on every server.</span><span lang="pl"><span class="g">Bez wartości w&nbsp;cache:</span> sama blokada, jeden naraz na wszystkie serwery.</span></li>
-					<li class="fragment"><span lang="en"><span class="g">A lease, not a hard lock:</span> a runner that crashes loses it after lock_ttl_ms.</span><span lang="pl"><span class="g">Dzierżawa, nie twarda blokada:</span> kto padnie, traci ją po lock_ttl_ms.</span></li>
-					<li class="fragment"><span lang="en"><span class="g">Or tryLock():</span> run it only if nobody is; the others do not wait.</span><span lang="pl"><span class="g">Albo tryLock():</span> wykonaj, gdy nikt tego nie robi; reszta nie czeka.</span></li>
+					<li class="fragment"><span lang="en"><span class="g">Nothing cached, just the lock:</span> the import runs on one server at a time.</span><span lang="pl"><span class="g">Nic w&nbsp;cache, sama blokada:</span> import działa w&nbsp;danej chwili tylko na jednym serwerze.</span></li>
+					<li class="fragment"><span lang="en"><span class="g">A server dies mid-import?</span> The lock expires on its own after lock_ttl_ms.</span><span lang="pl"><span class="g">Serwer padł w&nbsp;trakcie importu?</span> Blokada sama wygaśnie po lock_ttl_ms.</span></li>
+					<li class="fragment"><span lang="en"><span class="g">Or tryLock():</span> if the import is already running elsewhere, skip it instead of waiting.</span><span lang="pl"><span class="g">Albo tryLock():</span> jeśli import już gdzieś trwa, pomiń go zamiast czekać.</span></li>
 				</ul>
 			</div>
 		</div>
@@ -1251,9 +1256,9 @@ $lock->exclusively('import:companies',
 			<li><span class="when"><span lang="en">0 ms</span><span lang="pl">0&nbsp;ms</span></span><span><span lang="en">A visitor's cached page is missing; the server starts reading the article (the old text).</span><span lang="pl">Cache miss: serwer zaczyna czytać artykuł (jeszcze stary tekst).</span></span></li>
 			<li class="fragment"><span class="when"><span lang="en">50 ms</span><span lang="pl">50&nbsp;ms</span></span><span><span lang="en">The editor saves the new text, and the article's tag is forgotten.</span><span lang="pl">Redaktor zapisuje nowy tekst, co unieważnia tag artykułu.</span></span></li>
 			<li class="fragment"><span class="when"><span lang="en">300 ms</span><span lang="pl">300&nbsp;ms</span></span><span><span lang="en">The first read finishes and saves <span class="x">the old text</span>, after the edit.</span><span lang="pl">Pierwszy odczyt się kończy i&nbsp;zapisuje <span class="x">stary tekst</span>, już po edycji.</span></span></li>
-			<li class="fragment"><span class="when"><span lang="en">then</span><span lang="pl">potem</span></span><span class="x"><span lang="en">Without a fix, the old text stays until that cached page expires.</span><span lang="pl">Bez zabezpieczenia stary tekst wisi w&nbsp;cache, aż strona wygaśnie.</span></span></li>
+			<li class="fragment"><span class="when"><span lang="en">then</span><span lang="pl">potem</span></span><span class="x"><span lang="en">Without a fix, the old text stays until that cached page expires.</span><span lang="pl">Bez zabezpieczenia stary tekst zostaje w&nbsp;cache, dopóki strona nie wygaśnie.</span></span></li>
 		</ol>
-		<p class="claim fragment"><span lang="en">Rare: it takes an edit in the moment a missing page is being built. But on a busy site, sooner or later it happens.</span><span lang="pl">Rzadki przypadek, bo edycja musi wpaść akurat wtedy, gdy strona się generuje. Ale przy dużym ruchu prędzej czy później się zdarzy.</span></p>
+		<p class="claim fragment"><span lang="en">Rare: it takes an edit in the moment a missing page is being built. But on a busy site, sooner or later it happens.</span><span lang="pl">Rzadki przypadek, bo edycja musi wpaść akurat wtedy, gdy strona się generuje. Ale przy dużym ruchu prędzej czy później się wydarzy.</span></p>
 		<div class="term"><b><span lang="en">race</span><span lang="pl">wyścig</span></b><span><span lang="en">two things happening at once, where the result depends on which one finishes first.</span><span lang="pl">dwie rzeczy dzieją się naraz, a&nbsp;wynik zależy od tego, która skończy pierwsza.</span></span></div>
 		<aside class="notes">
 			<p><span lang="en">A request read the old article from the database; while its page was being built, the article was edited and the rule added. It saved its old page in the cache after the rule. Facebook's memcache paper calls this a stale set. Found by an audit of our own code.</span><span lang="pl">Żądanie przeczytało z&nbsp;bazy stary artykuł; zanim jego strona się wygenerowała, artykuł poprawiono i&nbsp;dopisano regułę. Starą stronę zapisało w&nbsp;cache już po regule. W&nbsp;artykule Facebooka o&nbsp;memcache nazywa się to „stale set”. Znaleźliśmy to, audytując własny kod.</span></p>
@@ -1383,9 +1388,9 @@ if current and current ~= miss_seen then return 0 end</pre>
 		<div class="word"><span class="a"><span lang="en">Nobody</span><span lang="pl">Nikt</span></span> <span class="b"><span lang="en">waits</span><span lang="pl">nie czeka</span></span></div>
 		<div class="road" data-here="13"></div>
 		<p class="teaser"><span lang="en"><span class="x">When a cached page expires, someone waits for the new one.</span> <span class="g">The fix:</span> nobody does.</span><span lang="pl"><span class="x">Gdy strona w&nbsp;cache wygasa, ktoś czeka na nową.</span> <span class="g">Rozwiązanie:</span> nikt nie czeka.</span></p>
-		<ul class="points">
+		<ul class="points leads">
 			<li><span lang="en"><span class="g">The previous cached page, for a moment:</span> handed out at once, until the new one is ready (a minute at most).</span><span lang="pl"><span class="g">Na chwilę poprzednia wersja:</span> zaserwowana od razu, aż nowa będzie gotowa (najwyżej minutę).</span></li>
-			<li><span lang="en"><span class="g">One rebuild, after the answer:</span> one request builds the new one once the visitor has the page.</span><span lang="pl"><span class="g">Jedno generowanie, po odpowiedzi:</span> jedno żądanie generuje nową, gdy odwiedzający ma już stronę.</span></li>
+			<li><span lang="en"><span class="g">One rebuild, after the answer:</span> the new one is built in the background, once the visitor has the page.</span><span lang="pl"><span class="g">Jedno generowanie, po odpowiedzi:</span> nowa generuje się w&nbsp;tle, gdy odwiedzający ma już stronę.</span></li>
 		</ul>
 		<p class="read-more"><b><span lang="en">read more</span><span lang="pl">więcej</span></b> <a href="https://www.rfc-editor.org/rfc/rfc5861" target="_blank" rel="noopener">RFC 5861 · stale-while-revalidate</a> <a href="https://github.com/symfony/symfony/issues/68052" target="_blank" rel="noopener">symfony/symfony #68052</a> <a href="https://github.com/artigo-dev/cache-stampede" target="_blank" rel="noopener">artigo-dev/cache-stampede</a> <a href="https://github.com/ovos/php-library/blob/main/README.CACHE.md#pattern-5-stale-while-revalidate-stale" target="_blank" rel="noopener">php-library · stale-while-revalidate</a></p>
 		<aside class="notes">
@@ -1409,10 +1414,26 @@ if current and current ~= miss_seen then return 0 end</pre>
 	<section class="slide">
 		<div class="eyebrow"><span lang="en">the fix <span class="on">//</span> stale-while-revalidate</span><span lang="pl">rozwiązanie <span class="on">//</span> stale-while-revalidate</span></div>
 		<h2><span lang="en">Hand out the previous cached page, <span class="g">for a moment</span></span><span lang="pl"><span class="g">Na chwilę</span> serwuj poprzednią wersję</span></h2>
-		<pre class="code" data-lang="php">
-return $store->get('report', fn() => $db->report(), ttl: 300,
-    stale: 60,     // past its 5 minutes: up to 60 s more, while one request rebuilds it
+		<div class="columns code-columns">
+			<div>
+				<h4 class="code-head"><span lang="en">php-library: per call</span><span lang="pl">php-library: w&nbsp;wywołaniu</span></h4>
+				<pre class="code tight" data-lang="php">
+return $store->get('report',
+    fn() => $db->report(),
+    ttl: 300,
+    stale: 60,  // then up to 60 s more
 );</pre>
+			</div>
+			<div>
+				<h4 class="code-head"><span lang="en">Symfony: per pool</span><span lang="pl">Symfony: na cały pool</span></h4>
+				<pre class="code tight" data-lang="php">
+// once; get() unchanged
+$pool = new StaleCache($inner,
+    staleSeconds: 60, election: $lock);
+// the rebuild after the response
+$pool->setDeferrer(new RefreshQueue());</pre>
+			</div>
+		</div>
 		<ul class="points">
 			<li><span lang="en">Nobody waits: the rebuild runs after the response has been sent.</span><span lang="pl">Nikt nie czeka: generowanie rusza po wysłaniu odpowiedzi.</span></li>
 			<li><span lang="en">The previous cached page is served <span class="g">only until the new one is ready</span>: here after 2 seconds, the report's build. 60 s is the limit, if the rebuild is slow or fails.</span><span lang="pl">Poprzednia wersja idzie <span class="g">tylko do chwili, gdy nowa jest gotowa</span>: tu 2&nbsp;sekundy, tyle generuje się raport. 60&nbsp;s to limit, gdyby generowanie się wlokło albo padło.</span></li>
@@ -1421,6 +1442,7 @@ return $store->get('report', fn() => $db->report(), ttl: 300,
 		<aside class="notes">
 			<p><span lang="en">The 60 s is a limit, not a duration: the previous page goes out only until the rebuild is saved (here the report's 2 seconds; in the demo two slides on, the 300 ms of the build, to 7 visitors). Only if the rebuild fails or hangs past the 60 s does the next visitor wait for a fresh build, as without it.</span><span lang="pl">Te 60&nbsp;s to limit, a&nbsp;nie czas trwania: poprzednia strona jest serwowana tylko do chwili, gdy nowa wersja się zapisze (tu przez 2&nbsp;sekundy generowania raportu; w&nbsp;demo dwa slajdy dalej przez 300&nbsp;ms generowania, 7 odwiedzającym). Dopiero gdy generowanie się wysypie albo zawiśnie na dłużej niż 60&nbsp;s, następny odwiedzający czeka na świeżą stronę, tak jak bez tej opcji.</span></p>
 			<p><span lang="en">Everyone gets the previous page at once, while one request builds the new one. Opt-in per call: whatever must never be a minute old does not ask for it. The name comes from HTTP caching (RFC 5861), where browsers and CDNs do the same.</span><span lang="pl">Wszyscy od razu dostają poprzednią wersję, a&nbsp;w&nbsp;tym czasie jedno żądanie generuje nową. To opcja, którą włącza się w&nbsp;konkretnym wywołaniu: co nie może być nieaktualne nawet przez minutę, po prostu o&nbsp;nią nie prosi. Nazwa pochodzi z&nbsp;cache'owania HTTP (RFC 5861) – przeglądarki i&nbsp;CDN-y robią dokładnie to samo.</span></p>
+			<p><span lang="en">In Symfony (artigo/cache-stampede) it is per pool, not per call: StaleCache wraps the pool once, and get() stays Symfony's own; whatever must never be a minute old goes into a pool without it. The RefreshQueue is what makes "nobody waits" true: without it, the one request that wins the refresh runs it at once, and its own visitor waits (the others still get the previous page). In an application, TerminateSubscriber runs the queue on kernel.terminate, after the response has gone out.</span><span lang="pl">W&nbsp;Symfony (artigo/cache-stampede) ustawia się to na poolu, a&nbsp;nie w&nbsp;wywołaniu: StaleCache owija pool raz, a&nbsp;get() zostaje zwykłym get() z&nbsp;Symfony; co nie może być nieaktualne nawet przez minutę, trafia do poola bez StaleCache. To RefreshQueue sprawia, że naprawdę nikt nie czeka: bez niej jedno żądanie, które wygra odświeżanie, robi je od razu i&nbsp;jego odwiedzający czeka (pozostali i&nbsp;tak dostają poprzednią wersję). W&nbsp;aplikacji kolejkę uruchamia TerminateSubscriber na kernel.terminate, już po wysłaniu odpowiedzi.</span></p>
 		</aside>
 	</section>
 
@@ -1445,7 +1467,7 @@ return $store->get('report', fn() => $db->report(), ttl: 300,
 		<div class="word"><span class="a"><span lang="en">Forget</span><span lang="pl">Zapomnij</span></span> <span class="b"><span lang="en">softly</span><span lang="pl">miękko</span></span></div>
 		<div class="road" data-here="14"></div>
 		<p class="teaser"><span lang="en"><span class="x">An edit deletes cached pages at once, and the next visitors wait for the rebuilds.</span> <span class="g">The fix:</span> nobody waits there either.</span><span lang="pl"><span class="x">Edycja od razu kasuje strony z&nbsp;cache, a&nbsp;kolejni odwiedzający czekają, aż strony wygenerują się od nowa.</span> <span class="g">Rozwiązanie:</span> tu też nikt nie czeka.</span></p>
-		<ul class="points">
+		<ul class="points leads">
 			<li><span lang="en"><span class="g">An edit ages the cached pages:</span> handed out a moment longer instead of being deleted.</span><span lang="pl"><span class="g">Edycja postarza strony w&nbsp;cache:</span> zamiast zniknąć, są serwowane chwilę dłużej.</span></li>
 			<li><span lang="en"><span class="g">Live once rebuilt:</span> each cached page rebuilt once, after the answers; a minute at most.</span><span lang="pl"><span class="g">Zmiana widoczna po wygenerowaniu:</span> każda strona generuje się raz, po odpowiedzi; najwyżej minuta.</span></li>
 		</ul>
@@ -1536,7 +1558,7 @@ $store->invalidateTags(
 		</ul>
 		<div class="term"><b><span lang="en">soft invalidation</span><span lang="pl">miękkie unieważnienie</span></b><span><span lang="en">an edit marks the cached page as old instead of deleting it, for a moment.</span><span lang="pl">edycja na chwilę oznacza stronę w&nbsp;cache jako starą, zamiast ją usuwać.</span></span></div>
 		<aside class="notes">
-			<p><span lang="en">With ttl 0 the menu is kept until an edit reaches it; the edit then serves it for at most a minute more. delete(), clear() and hard: true stay hard: nothing is ever served stale after them.</span><span lang="pl">Z&nbsp;ttl 0 menu siedzi w&nbsp;cache, dopóki nie dotknie go edycja; po edycji jest serwowane jeszcze najwyżej przez minutę. delete(), clear() i&nbsp;hard: true zostają twarde: po nich nigdy nie wychodzi nieaktualna wersja.</span></p>
+			<p><span lang="en">With ttl 0 the menu is kept until an edit reaches it; the edit then serves it for at most a minute more. delete(), clear() and hard: true stay hard: nothing is ever served stale after them. In Symfony the edit side is the same call, invalidateTags(['menu']) soft and invalidateTags(['menu'], hard: true) hard; the display side is the pool on slide 77 (softGraceSeconds and soft: true).</span><span lang="pl">Z&nbsp;ttl 0 menu siedzi w&nbsp;cache, dopóki nie dotknie go edycja; po edycji jest serwowane jeszcze najwyżej przez minutę. delete(), clear() i&nbsp;hard: true zostają twarde: po nich nigdy nie wychodzi nieaktualna wersja. W&nbsp;Symfony edycja to to samo wywołanie: invalidateTags(['menu']) miękko, invalidateTags(['menu'], hard: true) twardo; wyświetlanie to pool ze slajdu 77 (softGraceSeconds i&nbsp;soft: true).</span></p>
 		</aside>
 	</section>
 
@@ -1583,6 +1605,7 @@ $inner->setCallbackWrapper($lock);                  // the lock (stop 9)
 $pool = new StaleCache($inner, staleSeconds: 60,    // served stale while one request rebuilds
     staleIfErrorSeconds: 3600,                      // the database down? the last good one
     election: $lock, soft: true);                   // after an edit, too
+$pool->setDeferrer(new RefreshQueue());             // the rebuild runs after the response
 
 // then every time: Symfony's own get(), unchanged
 $pool->get('front-page', function(ItemInterface $item) {
@@ -1590,7 +1613,7 @@ $pool->get('front-page', function(ItemInterface $item) {
     return $this->build();
 });</pre>
 		<aside class="notes">
-			<p><span lang="en">The same five options as the php-library call on the previous slide, for a Symfony application: each package is a layer around a pool, and the application keeps calling get() as it always did. VersionedRedisTagAwareAdapter is a drop-in for RedisTagAwareAdapter (the same constructor shape, the same DSNs); the guard is on by default. MemoLock goes in as the inner pool's callback wrapper, a public Symfony method, so it runs on a miss. StaleCache wraps the pool, because serving a stale value needs the value's own times, which a callback wrapper never sees; it uses the same MemoLock to pick the one process that refreshes. In an application this is three service definitions in services.yaml.</span><span lang="pl">Tych samych pięć opcji co w&nbsp;wywołaniu php-library na poprzednim slajdzie, tylko dla aplikacji w&nbsp;Symfony: każdy pakiet to warstwa wokół poola, a&nbsp;aplikacja dalej woła get() jak zawsze. VersionedRedisTagAwareAdapter podmienia RedisTagAwareAdapter bez zmian (ten sam kształt konstruktora, te same DSN-y); strażnik jest domyślnie włączony. MemoLock wchodzi jako callback wrapper wewnętrznego poola, publiczna metoda Symfony, więc działa przy cache miss. StaleCache owija cały pool, bo do serwowania przeterminowanej wartości potrzebne są jej własne czasy, a&nbsp;callback wrapper ich nie widzi; ten sam MemoLock wybiera jeden proces, który odświeża. W&nbsp;aplikacji to trzy definicje serwisów w&nbsp;services.yaml.</span></p>
+			<p><span lang="en">The same five options as the php-library call on the previous slide, for a Symfony application: each package is a layer around a pool, and the application keeps calling get() as it always did. VersionedRedisTagAwareAdapter is a drop-in for RedisTagAwareAdapter (the same constructor shape, the same DSNs); the guard is on by default. MemoLock goes in as the inner pool's callback wrapper, a public Symfony method, so it runs on a miss. StaleCache wraps the pool, because serving a stale value needs the value's own times, which a callback wrapper never sees; it uses the same MemoLock to pick the one process that refreshes. setDeferrer() with a RefreshQueue moves that refresh after the response (TerminateSubscriber runs the queue on kernel.terminate); without it, the refreshing request waits for its own rebuild. In an application these are a few service definitions in services.yaml.</span><span lang="pl">Tych samych pięć opcji co w&nbsp;wywołaniu php-library na poprzednim slajdzie, tylko dla aplikacji w&nbsp;Symfony: każdy pakiet to warstwa wokół poola, a&nbsp;aplikacja dalej woła get() jak zawsze. VersionedRedisTagAwareAdapter podmienia RedisTagAwareAdapter bez zmian (ten sam kształt konstruktora, te same DSN-y); strażnik jest domyślnie włączony. MemoLock wchodzi jako callback wrapper wewnętrznego poola, publiczna metoda Symfony, więc działa przy cache miss. StaleCache owija cały pool, bo do serwowania przeterminowanej wartości potrzebne są jej własne czasy, a&nbsp;callback wrapper ich nie widzi; ten sam MemoLock wybiera jeden proces, który odświeża. setDeferrer() z&nbsp;RefreshQueue przesuwa to odświeżanie na czas po odpowiedzi (kolejkę uruchamia TerminateSubscriber na kernel.terminate); bez tego żądanie, które odświeża, czeka na własne generowanie. W&nbsp;aplikacji to kilka definicji serwisów w&nbsp;services.yaml.</span></p>
 		</aside>
 	</section>
 
@@ -1631,7 +1654,7 @@ $pool->get('front-page', function(ItemInterface $item) {
 				<h4 class="g"><a href="https://github.com/artigo-dev/versioned-cache" target="_blank" rel="noopener">artigo/versioned-cache</a></h4>
 				<ul class="points">
 					<li><span lang="en">A tag-aware Redis adapter for symfony/cache.</span><span lang="pl">Adapter Redisa z&nbsp;obsługą tagów dla symfony/cache.</span></li>
-					<li><span lang="en">Forgetting a tag: a handful of commands, for 3 cached pages or a million.</span><span lang="pl">Unieważnienie tagu: kilka poleceń, czy to 3 strony, czy milion.</span></li>
+					<li><span lang="en">Forgetting a tag: a handful of commands, for 3&nbsp;cached pages or a million.</span><span lang="pl">Zapomnienie tagu: kilka poleceń, niezależnie czy to 3&nbsp;strony, czy milion.</span></li>
 				</ul>
 			</div>
 			<div>
@@ -1639,7 +1662,7 @@ $pool->get('front-page', function(ItemInterface $item) {
 				<ul class="points">
 					<li><span lang="en">MemoLock: the lock in Redis, the others woken by a message (+4 ms).</span><span lang="pl">MemoLock: blokada w&nbsp;Redisie, resztę budzi wiadomość (+4&nbsp;ms).</span></li>
 					<li><span lang="en">FleetLock: the same lock on any symfony/lock store, PostgreSQL too; on most stores the others check every 100 ms (+108 ms).</span><span lang="pl">FleetLock: ta sama blokada na dowolnym store z&nbsp;symfony/lock, także PostgreSQL; na większości z&nbsp;nich reszta sprawdza co 100&nbsp;ms (+108&nbsp;ms).</span></li>
-					<li><span lang="en">StaleCache: serve the previous cached page while one request rebuilds.</span><span lang="pl">StaleCache: serwuje poprzednią wersję, póki jedno żądanie generuje nową.</span></li>
+					<li><span lang="en">StaleCache: serves the previous version until the new one is built in the background.</span><span lang="pl">StaleCache: serwuje poprzednią wersję, dopóki w&nbsp;tle nie wygeneruje się nowa.</span></li>
 				</ul>
 			</div>
 		</div>

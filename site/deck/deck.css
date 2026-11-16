@@ -1769,6 +1769,30 @@ pre.code.tight
 	margin-top: 26px;
 }
 
+/* a stop's points: the green lead on a line of its own, the sentence under it */
+
+ul.points.leads li > span > .g:first-child
+{
+	display: block;
+}
+
+ul.points.leads li
+{
+	margin-bottom: 14px;
+}
+
+ul.points.leads ~ .read-more
+{
+	margin-top: 24px;
+}
+
+/* a stop has no road along the bottom: its term sits on the safe line */
+
+.slide:has(> .road:not(.mini)) > .term
+{
+	bottom: calc(1080px - var(--safe));
+}
+
 /* a sequence's left column, lit: the chosen option */
 
 ol.sequence li .when.g
