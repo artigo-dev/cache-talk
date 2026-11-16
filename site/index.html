@@ -827,7 +827,7 @@ $pool->setCallbackWrapper(
 	<section class="slide">
 		<div class="eyebrow"><span lang="en">the fix <span class="on">//</span> woken by a signal</span><span lang="pl">rozwiązanie <span class="on">//</span> obudzeni sygnałem</span></div>
 		<h2><span lang="en">Woken by a message, <span class="g">not a timer</span></span><span lang="pl">Budzi ich wiadomość, <span class="g">nie zegar</span></span></h2>
-		<pre class="code" data-lang="lua">
+		<pre class="code tight compact" data-lang="lua">
 -- MemoLock.lua: the release, one call
 if redis.call('GET', lock_key) == lock_value then
     redis.call('PUBLISH', channel, '1')     -- the others wake now
@@ -836,11 +836,11 @@ end
 return 0</pre>
 		<ul class="points">
 			<li><span lang="en"><span class="x">Symfony's LockRegistry checks every 100 ms:</span> a waiting request answers up to 100 ms after the report is ready. A message wakes it at once.</span><span lang="pl"><span class="x">LockRegistry w&nbsp;Symfony sprawdza co 100&nbsp;ms:</span> czekające żądanie dostaje raport nawet 100&nbsp;ms po czasie. Wiadomość budzi je od razu.</span></li>
-			<li class="fragment"><span lang="en">Only the request that took the lock can release it: it writes its own token into the lock, and the release checks that it is still there.</span><span lang="pl">Blokadę zwolni tylko żądanie, które ją założyło: zapisuje w&nbsp;niej swój token, a&nbsp;zwolnienie sprawdza, czy to wciąż ten sam.</span></li>
-			<li class="fragment"><span lang="en">Waiting needs <span class="w">its own connection</span>: a waiting client answers nothing else.</span><span lang="pl">Czekanie wymaga <span class="w">osobnego połączenia</span>: czekający klient nie zrobi nic innego.</span></li>
+			<li class="fragment"><span lang="en">Only the request that took the lock can release it: it writes its own token into the lock, and the release checks that the token matches.</span><span lang="pl">Blokadę zwolni tylko żądanie, które ją założyło: zapisuje w&nbsp;niej swój token, a&nbsp;zwolnienie sprawdza, czy token się zgadza.</span></li>
+			<li class="fragment"><span lang="en">Waiting needs <span class="w">its own connection</span>: on a shared one replies reach the wrong command, so a cache read gets a Pub/Sub message and the waiter gets a cached value.</span><span lang="pl">Czekanie wymaga <span class="w">osobnego połączenia</span>: na wspólnym odpowiedzi się rozjeżdżają, więc odczyt z&nbsp;cache dostaje wiadomość z&nbsp;Pub/Sub, a&nbsp;czekający – wartość z&nbsp;cache.</span></li>
 		</ul>
 		<aside class="notes">
-			<p><span lang="en">The waiters do not check every 100 ms; a message wakes them when the report is ready. The separate connection was learned the hard way (in the CMS): messages turned up in the replies to ordinary reads.</span><span lang="pl">Czekający nie sprawdzają co 100&nbsp;ms – budzi ich wiadomość, kiedy raport jest gotowy. O&nbsp;osobnym połączeniu przekonaliśmy się na własnej skórze (w&nbsp;CMS-ie): wiadomości lądowały w&nbsp;odpowiedziach na zwykłe odczyty.</span></p>
+			<p><span lang="en">The waiters do not check every 100 ms; a message wakes them when the report is ready. While a connection is subscribed, Redis takes only SUBSCRIBE, UNSUBSCRIBE and PING on it. Worse: the waiter unsubscribes after the first message, and if a second one arrives before Redis has processed that UNSUBSCRIBE, it stays in the connection. From then on every command reads the reply meant for an earlier one. In our test a GET for the report returned "unsubscribe", the next one the channel name, and the report itself came four commands late; the next waiter on that connection read the reply to an earlier GET instead of its wake-up. We learned that the hard way in the CMS.</span><span lang="pl">Czekający nie sprawdzają co 100&nbsp;ms – budzi ich wiadomość, kiedy raport jest gotowy. Dopóki połączenie subskrybuje, Redis przyjmuje na nim tylko SUBSCRIBE, UNSUBSCRIBE i&nbsp;PING. Gorzej: czekający robi UNSUBSCRIBE po pierwszej wiadomości, a&nbsp;jeśli druga przyjdzie, zanim Redis je przetworzy, zostaje w&nbsp;połączeniu. Od tej chwili każde polecenie czyta odpowiedź przeznaczoną dla wcześniejszego. W&nbsp;naszym teście GET raportu zwrócił „unsubscribe”, następny nazwę kanału, a&nbsp;sam raport przyszedł cztery polecenia później; kolejny czekający na tym połączeniu zamiast swojej pobudki przeczytał odpowiedź na wcześniejszy GET. Przekonaliśmy się o&nbsp;tym na własnej skórze w&nbsp;CMS-ie.</span></p>
 		</aside>
 	</section>
 
@@ -912,7 +912,7 @@ return 0</pre>
 			<g class="fragment">
 				<line x1="1410" y1="522" x2="828" y2="522" class="seq-arrow good" marker-end="url(#seq-head-good)"/>
 				<text x="1115" y="510" class="seq-cmd"><tspan lang="en">GET report → there</tspan><tspan lang="pl">GET report → jest</tspan></text>
-				<text x="525" y="522" class="seq-say strong"><tspan lang="en">one rebuild for all 24</tspan><tspan lang="pl">jedno liczenie na wszystkie 24</tspan></text>
+				<text x="525" y="522" class="seq-say strong"><tspan lang="en">one rebuild for all 24</tspan><tspan lang="pl">24 żądania, jedno generowanie</tspan></text>
 			</g>
 		</svg>
 		<div class="term"><b>pub/sub</b><span><span lang="en">publish and subscribe: clients wait on a channel, and one message to it wakes every one of them at once.</span><span lang="pl">publish/subscribe: klienci czekają na kanale, a&nbsp;jedna wiadomość budzi ich wszystkich naraz.</span></span></div>
@@ -1000,7 +1000,7 @@ $lock->exclusively('import:companies',
 					<li><span lang="en">One request rebuilds; the others, on every server, wait for it.</span><span lang="pl">Jedno żądanie liczy, reszta na każdym serwerze czeka.</span></li>
 					<li><span lang="en">The others are woken by a message: +3 ms, not +100.</span><span lang="pl">Resztę budzi wiadomość: +3&nbsp;ms, nie +100.</span></li>
 					<li><span lang="en">Only the request that has the lock can release it. If that request crashes, the lock expires after 5 s and another request takes over.</span><span lang="pl">Blokadę zwalnia tylko żądanie, które ją ma. Gdy padnie, blokada wygasa po 5&nbsp;s i&nbsp;przejmuje ją inne żądanie.</span></li>
-					<li><span lang="en">A cached page that is there costs nothing: the lock is only taken on a miss.</span><span lang="pl">Cache hit nic nie kosztuje: blokadę bierzemy tylko przy cache miss.</span></li>
+					<li><span lang="en">A cached page that is there costs nothing: the lock is only taken on a miss.</span><span lang="pl">Cache hit nic nie kosztuje: blokadę zakładamy tylko przy cache miss.</span></li>
 				</ul>
 			</div>
 			<div>
@@ -1068,16 +1068,86 @@ $lock->exclusively('import:companies',
 	</section>
 
 	<section class="slide">
+		<div class="eyebrow"><span lang="en">stop 10 <span class="on">//</span> measured</span><span lang="pl">przystanek 10 <span class="on">//</span> pomiar</span></div>
+		<h2><span lang="en">RediSearch: <span class="g">good for small sites</span></span><span lang="pl">RediSearch: <span class="g">dobry dla małych serwisów</span></span></h2>
+		<div class="columns chart-left">
+			<div>
+				<h4><span lang="en">Forgetting one tag, by the pages it is on</span><span lang="pl">Zapomnienie jednego tagu a&nbsp;liczba jego stron</span></h4>
+				<svg class="chart" viewBox="0 0 972 520" role="img" aria-label="Forgetting one tag with RediSearch, by the cached pages it is on: 50 000 pages 0.22 s, 100 000 0.46 s, 200 000 0.99 s, 300 000 1.60 s, 500 000 2.51 s, a million 5.15 s. Under a second up to 200 000 pages.">
+					<rect x="96" y="20" width="168.8" height="410" class="band"/>
+					<text x="180.4" y="52" class="band-label"><tspan lang="en">under a second</tspan><tspan lang="pl">poniżej sekundy</tspan></text>
+					<line x1="96" y1="293.3" x2="940" y2="293.3" class="grid"/>
+					<line x1="96" y1="225.0" x2="940" y2="225.0" class="grid"/>
+					<line x1="96" y1="156.7" x2="940" y2="156.7" class="grid"/>
+					<line x1="96" y1="88.3" x2="940" y2="88.3" class="grid"/>
+					<line x1="96" y1="20.0" x2="940" y2="20.0" class="grid"/>
+					<line x1="96" y1="361.7" x2="940" y2="361.7" class="threshold"/>
+					<line x1="96" y1="430" x2="940" y2="430" class="axis"/>
+					<text x="80" y="438.0" class="tick y">0</text>
+					<text x="80" y="369.7" class="tick y strong">1&nbsp;s</text>
+					<text x="80" y="301.3" class="tick y">2&nbsp;s</text>
+					<text x="80" y="233.0" class="tick y">3&nbsp;s</text>
+					<text x="80" y="164.7" class="tick y">4&nbsp;s</text>
+					<text x="80" y="96.3" class="tick y">5&nbsp;s</text>
+					<text x="80" y="28.0" class="tick y">6&nbsp;s</text>
+					<text x="96.0" y="468" class="tick x">0</text>
+					<text x="264.8" y="468" class="tick x">200&#8239;000</text>
+					<text x="433.6" y="468" class="tick x">400&#8239;000</text>
+					<text x="602.4" y="468" class="tick x">600&#8239;000</text>
+					<text x="771.2" y="468" class="tick x">800&#8239;000</text>
+					<text x="940.0" y="468" class="tick x end">1&#8239;000&#8239;000</text>
+					<text x="518" y="510" class="axis-title"><tspan lang="en">cached pages on the tag</tspan><tspan lang="pl">stron w&nbsp;cache z&nbsp;tym tagiem</tspan></text>
+					<path d="M 138.2 415.0 L 180.4 398.6 L 264.8 362.4 L 349.2 320.7 L 518.0 258.5 L 940.0 78.1" class="series"/>
+					<circle cx="138.2" cy="415.0" r="7" class="dot"/>
+					<circle cx="180.4" cy="398.6" r="7" class="dot"/>
+					<circle cx="264.8" cy="362.4" r="7" class="dot"/>
+					<circle cx="349.2" cy="320.7" r="7" class="dot"/>
+					<circle cx="518.0" cy="258.5" r="7" class="dot"/>
+					<circle cx="940.0" cy="78.1" r="7" class="dot"/>
+					<text x="280.8" y="396.4" class="value"><tspan lang="en">0.99&nbsp;s</tspan><tspan lang="pl">0,99&nbsp;s</tspan></text>
+					<text x="504.0" y="242.5" class="value end"><tspan lang="en">2.51&nbsp;s</tspan><tspan lang="pl">2,51&nbsp;s</tspan></text>
+					<text x="924.0" y="62.099999999999994" class="value end"><tspan lang="en">5.15&nbsp;s</tspan><tspan lang="pl">5,15&nbsp;s</tspan></text>
+					<g lang="en">
+						<circle cx="138.2" cy="415.0" r="24" class="hit"><title>50&#8239;000 pages: 0.22 s</title></circle>
+						<circle cx="180.4" cy="398.6" r="24" class="hit"><title>100&#8239;000 pages: 0.46 s</title></circle>
+						<circle cx="264.8" cy="362.4" r="24" class="hit"><title>200&#8239;000 pages: 0.99 s</title></circle>
+						<circle cx="349.2" cy="320.7" r="24" class="hit"><title>300&#8239;000 pages: 1.60 s</title></circle>
+						<circle cx="518.0" cy="258.5" r="24" class="hit"><title>500&#8239;000 pages: 2.51 s</title></circle>
+						<circle cx="940.0" cy="78.1" r="24" class="hit"><title>1&#8239;000&#8239;000 pages: 5.15 s</title></circle>
+					</g>
+					<g lang="pl">
+						<circle cx="138.2" cy="415.0" r="24" class="hit"><title>50&#8239;000 stron: 0,22 s</title></circle>
+						<circle cx="180.4" cy="398.6" r="24" class="hit"><title>100&#8239;000 stron: 0,46 s</title></circle>
+						<circle cx="264.8" cy="362.4" r="24" class="hit"><title>200&#8239;000 stron: 0,99 s</title></circle>
+						<circle cx="349.2" cy="320.7" r="24" class="hit"><title>300&#8239;000 stron: 1,60 s</title></circle>
+						<circle cx="518.0" cy="258.5" r="24" class="hit"><title>500&#8239;000 stron: 2,51 s</title></circle>
+						<circle cx="940.0" cy="78.1" r="24" class="hit"><title>1&#8239;000&#8239;000 stron: 5,15 s</title></circle>
+					</g>
+				</svg>
+			</div>
+			<div>
+				<h4 class="g"><span lang="en">The verdict</span><span lang="pl">Werdykt</span></h4>
+				<ul class="points">
+					<li class="fragment"><span lang="en"><span class="g">Nobody waits:</span> under 7&nbsp;ms, at any size.</span><span lang="pl"><span class="g">Nikt nie czeka:</span> poniżej 7&nbsp;ms, przy każdej skali.</span></li>
+					<li class="fragment"><span lang="en"><span class="g">Nothing left behind:</span> an expired page drops out of the index.</span><span lang="pl"><span class="g">Nic nie zostaje:</span> wygasła strona wypada z&nbsp;indeksu.</span></li>
+					<li class="bad fragment"><span lang="en"><span class="x">Beyond 200&nbsp;000, deleting decides:</span> about 5&nbsp;µs a page, however the pages are found.</span><span lang="pl"><span class="x">Powyżej 200&nbsp;000 decyduje usuwanie:</span> około 5&nbsp;µs na stronę, wszystko jedno, jak je znajdziemy.</span></li>
+				</ul>
+			</div>
+		</div>
+		<aside class="notes">
+			<p><span lang="en">The verdict on RediSearch: an interesting experiment, and a good store for a small site. Measured, one tag forgotten with RediSearch, 1 KB pages, a fresh Redis each: 50&nbsp;000 pages 0.22 s, 100&nbsp;000 pages 0.46 s, 200&nbsp;000 pages 0.99 s, 300&nbsp;000 pages 1.60 s, 500&nbsp;000 pages 2.51 s, a million 5.15 s; about 4.4 to 5.3 µs per page, and nobody waiting more than 7 ms at any size. So up to about 200&nbsp;000 cached pages on a tag, forgetting it takes under a second; beyond that, one delete per page decides the time, no matter how the pages are found.</span><span lang="pl">Werdykt w&nbsp;sprawie RediSearch: ciekawy eksperyment i&nbsp;dobry store dla małego serwisu. Pomiary, jeden tag unieważniany przez RediSearch, strony po 1&nbsp;KB, za każdym razem świeży Redis: 50&nbsp;000 stron – 0,22&nbsp;s, 100&nbsp;000 – 0,46&nbsp;s, 200&nbsp;000 – 0,99&nbsp;s, 300&nbsp;000 – 1,60&nbsp;s, 500&nbsp;000 – 2,51&nbsp;s, milion – 5,15&nbsp;s; od około 4,4 do 5,3&nbsp;µs na stronę, a&nbsp;nikt, przy żadnej skali, nie czekał dłużej niż 7&nbsp;ms. Czyli dopóki tag ma do około 200&nbsp;000 stron w&nbsp;cache, jego unieważnienie trwa poniżej sekundy; powyżej o&nbsp;czasie decyduje jedno usunięcie na stronę, wszystko jedno, jak te strony znajdujemy.</span></p>
+			<p><span lang="en">The chart is that run: a straight line, twice the pages, twice the time, because every page is one delete.</span><span lang="pl">Wykres to właśnie ten pomiar: prosta linia, dwa razy więcej stron, dwa razy dłużej, bo każda strona to jedno usunięcie.</span></p>
+		</aside>
+	</section>
+
+	<section class="slide">
 		<div class="eyebrow"><span lang="en">the lesson <span class="on">//</span> stop 10</span><span lang="pl">lekcja <span class="on">//</span> przystanek 10</span></div>
 		<p class="statement"><span lang="en">Every design so far deletes every page.<br><span class="g">That is the cost to remove.</span></span><span lang="pl">Dotąd każde podejście usuwa każdą stronę.<br><span class="g">Ten koszt trzeba wyciąć.</span></span></p>
 		<ul class="points">
-			<li class="fragment"><span lang="en"><span class="g">An interesting experiment:</span> nobody waits, and nothing is left behind when pages expire.</span><span lang="pl"><span class="g">Ciekawy eksperyment:</span> nikt nie czeka, a&nbsp;po wygaśnięciu stron nic nie zostaje.</span></li>
-			<li class="fragment"><span lang="en"><span class="g">Good for small sites:</span> a tag on up to 200&nbsp;000 cached pages is forgotten within a second.</span><span lang="pl"><span class="g">Dobre dla małych serwisów:</span> tag na najwyżej 200&nbsp;000 stron unieważnisz w&nbsp;niecałą sekundę.</span></li>
-			<li class="bad fragment"><span lang="en"><span class="x">Beyond that, the deleting decides.</span> The next stop deletes nothing: invalidation takes a few milliseconds, no matter how many pages.</span><span lang="pl"><span class="x">Powyżej tempo dyktuje usuwanie.</span> Następny przystanek nic nie usuwa: unieważnienie to parę milisekund, choćby stron był milion.</span></li>
+			<li class="fragment"><span lang="en"><span class="g">The next stop deletes nothing:</span> invalidation takes a few milliseconds, no matter how many pages.</span><span lang="pl"><span class="g">Następny przystanek nic nie usuwa:</span> unieważnienie to parę milisekund, choćby stron był milion.</span></li>
 		</ul>
 		<aside class="notes">
 			<p><span lang="en">The classic lists, the Lua batches, RediSearch: each finds the pages its own way, and each still deletes them, one by one. RediSearch removed the tag lists, and with them the old names and the waiting; it did not remove the deleting. That is what the next stop takes away.</span><span lang="pl">Klasyczne listy, porcje w&nbsp;Lua, RediSearch: każde z&nbsp;nich znajduje strony po swojemu i&nbsp;każde dalej usuwa je jedną po drugiej. RediSearch pozbył się list tagów, a&nbsp;razem z&nbsp;nimi starych nazw i&nbsp;czekania – ale usuwania się nie pozbył. I&nbsp;właśnie to zabiera następny przystanek.</span></p>
-			<p><span lang="en">The verdict on RediSearch: an interesting experiment, and a good store for a small site. Measured, one tag forgotten with RediSearch, 1 KB pages, a fresh Redis each: 50&nbsp;000 pages 0.22 s, 100&nbsp;000 pages 0.46 s, 200&nbsp;000 pages 0.99 s, 300&nbsp;000 pages 1.60 s, 500&nbsp;000 pages 2.51 s, a million 5.15 s; about 4.4 to 5.3 µs per page, and nobody waiting more than 7 ms at any size. So up to about 200&nbsp;000 cached pages on a tag, forgetting it takes under a second; beyond that, one delete per page decides the time, no matter how the pages are found.</span><span lang="pl">Werdykt w&nbsp;sprawie RediSearch: ciekawy eksperyment i&nbsp;dobry store dla małego serwisu. Pomiary, jeden tag unieważniany przez RediSearch, strony po 1&nbsp;KB, za każdym razem świeży Redis: 50&nbsp;000 stron – 0,22&nbsp;s, 100&nbsp;000 – 0,46&nbsp;s, 200&nbsp;000 – 0,99&nbsp;s, 300&nbsp;000 – 1,60&nbsp;s, 500&nbsp;000 – 2,51&nbsp;s, milion – 5,15&nbsp;s; od około 4,4 do 5,3&nbsp;µs na stronę, a&nbsp;nikt, przy żadnej skali, nie czekał dłużej niż 7&nbsp;ms. Czyli dopóki tag ma do około 200&nbsp;000 stron w&nbsp;cache, jego unieważnienie trwa poniżej sekundy; powyżej o&nbsp;czasie decyduje jedno usunięcie na stronę, wszystko jedno, jak te strony znajdujemy.</span></p>
 			<p><span lang="en">Pause here. Every stop so far deleted cached pages when something changed. The next one does not.</span><span lang="pl">Tu pauza. Do tej pory każdy przystanek, gdy coś się zmieniło, usuwał strony z&nbsp;cache. Następny – nie.</span></p>
 		</aside>
 	</section>
@@ -1558,7 +1628,7 @@ $store->invalidateTags(
 		</ul>
 		<div class="term"><b><span lang="en">soft invalidation</span><span lang="pl">miękkie unieważnienie</span></b><span><span lang="en">an edit marks the cached page as old instead of deleting it, for a moment.</span><span lang="pl">edycja na chwilę oznacza stronę w&nbsp;cache jako starą, zamiast ją usuwać.</span></span></div>
 		<aside class="notes">
-			<p><span lang="en">With ttl 0 the menu is kept until an edit reaches it; the edit then serves it for at most a minute more. delete(), clear() and hard: true stay hard: nothing is ever served stale after them. In Symfony the edit side is the same call, invalidateTags(['menu']) soft and invalidateTags(['menu'], hard: true) hard; the display side is the pool on slide 77 (softGraceSeconds and soft: true).</span><span lang="pl">Z&nbsp;ttl 0 menu siedzi w&nbsp;cache, dopóki nie dotknie go edycja; po edycji jest serwowane jeszcze najwyżej przez minutę. delete(), clear() i&nbsp;hard: true zostają twarde: po nich nigdy nie wychodzi nieaktualna wersja. W&nbsp;Symfony edycja to to samo wywołanie: invalidateTags(['menu']) miękko, invalidateTags(['menu'], hard: true) twardo; wyświetlanie to pool ze slajdu 77 (softGraceSeconds i&nbsp;soft: true).</span></p>
+			<p><span lang="en">With ttl 0 the menu is kept until an edit reaches it; the edit then serves it for at most a minute more. delete(), clear() and hard: true stay hard: nothing is ever served stale after them. In Symfony the edit side is the same call, invalidateTags(['menu']) soft and invalidateTags(['menu'], hard: true) hard; the display side is the pool on slide 78 (softGraceSeconds and soft: true).</span><span lang="pl">Z&nbsp;ttl 0 menu siedzi w&nbsp;cache, dopóki nie dotknie go edycja; po edycji jest serwowane jeszcze najwyżej przez minutę. delete(), clear() i&nbsp;hard: true zostają twarde: po nich nigdy nie wychodzi nieaktualna wersja. W&nbsp;Symfony edycja to to samo wywołanie: invalidateTags(['menu']) miękko, invalidateTags(['menu'], hard: true) twardo; wyświetlanie to pool ze slajdu 78 (softGraceSeconds i&nbsp;soft: true).</span></p>
 		</aside>
 	</section>
 

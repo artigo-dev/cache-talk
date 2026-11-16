@@ -1733,6 +1733,19 @@ pre.code.tight
 	line-height: 1.32;
 }
 
+/* a short code block above three two-line points (the MemoLock release): smaller and closer, so the points clear the road */
+
+pre.code.compact
+{
+	margin-top: 32px;
+	font-size: 24px;
+}
+
+pre.code.compact + ul.points
+{
+	margin-top: 32px;
+}
+
 /* the left code is the longer one (Lua inside Redis, beside the PHP that calls it) */
 
 .code-columns.wide-left
@@ -2195,6 +2208,98 @@ table.data tr.pair td
 }
 
 /* a sequence diagram: lanes, lifelines, messages (MemoLock, step by step) */
+
+/* a measured line chart beside its points (the RediSearch verdict): the chart takes the wider column */
+
+.columns.chart-left
+{
+	grid-template-columns: 1.6fr 1fr;
+	align-items: start;
+}
+
+svg.chart
+{
+	display: block;
+	width: 100%;
+	height: auto;
+	margin: 12px 0 0;
+	overflow: visible;
+}
+
+svg.chart .grid
+{
+	stroke: var(--border);
+	stroke-width: 1;
+}
+
+svg.chart .axis
+{
+	stroke: var(--muted);
+	stroke-width: 2;
+}
+
+svg.chart .threshold
+{
+	stroke: var(--muted);
+	stroke-width: 2;
+	stroke-dasharray: 8 8;
+}
+
+svg.chart .band
+{
+	fill: var(--mint);
+	opacity: .08;
+}
+
+svg.chart .tick,
+svg.chart .axis-title,
+svg.chart .band-label
+{
+	fill: var(--muted);
+	font-family: var(--display);
+	font-size: 22px;
+	font-weight: 500;
+}
+
+svg.chart .tick.y { text-anchor: end; }
+svg.chart .tick.x,
+svg.chart .axis-title,
+svg.chart .band-label { text-anchor: middle; }
+svg.chart .tick.x.end { text-anchor: end; }
+svg.chart .tick.strong,
+svg.chart .band-label { fill: var(--text); }
+
+svg.chart .series
+{
+	fill: none;
+	stroke: var(--mint);
+	stroke-width: 3;
+	stroke-linejoin: round;
+}
+
+svg.chart .dot
+{
+	fill: var(--mint);
+	stroke: var(--bg);
+	stroke-width: 3;
+}
+
+svg.chart .value
+{
+	fill: var(--text);
+	font-family: var(--display);
+	font-size: 28px;
+	font-weight: 700;
+}
+
+svg.chart .value.end { text-anchor: end; }
+
+/* bigger than the dot, so the tooltip is easy to hit */
+
+svg.chart .hit
+{
+	fill: transparent;
+}
 
 svg.sequence
 {
