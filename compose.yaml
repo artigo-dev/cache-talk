@@ -9,9 +9,10 @@
 services:
     redis:
         image: redis:8-alpine
-        # volatile-ttl as in production; no snapshots, so a 1M-item ban never
-        # forks a background save in the middle of a measurement
-        command: redis-server --maxmemory-policy volatile-ttl --save "" --appendonly no
+        # volatile-lru as in production (with no maxmemory it never evicts);
+        # no snapshots, so a 1M-item ban never forks a background save in the
+        # middle of a measurement
+        command: redis-server --maxmemory-policy volatile-lru --save "" --appendonly no
         healthcheck:
             test: ["CMD", "redis-cli", "ping"]
             interval: 2s
