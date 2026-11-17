@@ -3090,6 +3090,19 @@ svg.curve .tick-label.y
 	text-anchor: start;
 }
 
+/* inside each decade (2 to 9 times its start): fainter than the decades, so they still lead */
+
+svg.curve .tick.minor
+{
+	opacity: .5;
+}
+
+svg.curve .tick-label.minor
+{
+	font-size: 15px;
+	opacity: .7;
+}
+
 svg.curve .series-line
 {
 	fill: none;

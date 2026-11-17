@@ -105,6 +105,19 @@ Deck.register('curve', (element) =>
 			const ms = 10 ** power;
 			make('line', {x1: labelWidth, x2: chartRight, y1: y(ms), y2: y(ms), class: 'tick'}, axis);
 			make('text', {x: chartRight + 12, y: y(ms) + 6, class: 'tick-label y'}, axis).textContent = msLabel(Number(ms.toPrecision(1)));
+
+			// inside the decade, fainter: a line at 2 to 9 times its start, and a label at 2 and 5. On a log
+			// scale 5 s sits 70 % of the way from 1 s to 10 s; without them the eye reads the decade as even,
+			// and 5.5 s looks like 8 s
+			for(let times = 2; power < yMax && times <= 9; times++)
+			{
+				const minor = Number((times * ms).toPrecision(1));
+				make('line', {x1: labelWidth, x2: chartRight, y1: y(minor), y2: y(minor), class: 'tick minor'}, axis);
+				if(times === 2 || times === 5)
+				{
+					make('text', {x: chartRight + 12, y: y(minor) + 5, class: 'tick-label y minor'}, axis).textContent = msLabel(minor);
+				}
+			}
 		}
 		make('text', {x: labelWidth - 40, y: height - 8, class: 'axis-title'}, axis).textContent = Deck.t('cached pages with the tag →');
 		const middle = (top + bottom) / 2;
