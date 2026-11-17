@@ -46,7 +46,10 @@ use function unlink;
  * pages sampled: gone, or outdated. Every page holds PAGE_BYTES (1 KB) of
  * random text, as a real one would.
  *
- * - file: Talk\Store\File, capped at FILE_MAX
+ * - file: Talk\Store\File on a disk, where a file cache usually is:
+ *   compose.yaml's talk-disk volume, the Docker VM's ext4, whose virtual disk
+ *   is on the laptop's SSD (tmpfs, its best case, is the file ban's other
+ *   medium)
  * - classic: our classic backend, Talk\Store\RedisClassic (SUNION, then one
  *   MULTI with a DEL of every page)
  * - redis, redisearch, versioned: php-library's stores
@@ -54,7 +57,7 @@ use function unlink;
 class Curve extends Scenario
 {
 	public const array LABELS = [
-		'file' => 'File cache',
+		'file' => 'File cache (SSD)',
 		'classic' => 'Classic Redis',
 		'redis' => 'Store\Redis',
 		'redisearch' => 'RediSearch',
@@ -71,9 +74,10 @@ class Curve extends Scenario
 		'versioned' => 'RedisVersioned',
 	];
 	
-	protected const int FILE_MAX = 100_000;
-	
-	protected const string DIR = '/tmp/talk/curve';
+	/**
+	 * The file cache's directories: on the SSD (see compose.yaml's talk-disk)
+	 */
+	protected const string DIR = '/var/talk-disk/curve';
 	
 	public function name(): string
 	{
@@ -100,7 +104,7 @@ class Curve extends Scenario
 		{
 			Env::flush($redis);
 			$run = $this->runId();
-			$sizes = static::sizes($kind === 'file' ? min($max, static::FILE_MAX) : $max);
+			$sizes = static::sizes($max);
 			$sink->emit([
 				'type' => 'segment',
 				't' => 0,

@@ -140,7 +140,8 @@ Deck.register('curve', (element) =>
 			
 			return value;
 		});
-		make('text', {x: 0, y: rowsTop - 34, class: 'legend-label'}, legend).textContent = Deck.t('the largest tag:');
+		const heading = make('text', {x: 0, y: rowsTop - 34, class: 'legend-label'}, legend);
+		heading.textContent = Deck.t('the largest tag:');
 		
 		const sizes = [...new Set(all.map((point) => point.pages))].sort((a, b) => a - b);
 		const stepMs = 70 / pace;
@@ -149,13 +150,18 @@ Deck.register('curve', (element) =>
 		{
 			const shown = Math.min(sizes.length, Math.floor((performance.now() - startedAt) / stepMs) + 1);
 			const upTo = sizes[shown - 1];
+			const visibles = lines.map((line) => line.store.points.filter((point) => point.pages <= upTo));
+			// every line at the same size: the heading names it once, and a row holds only its time
+			const lasts = visibles.map((visible) => visible[visible.length - 1]);
+			const shared = lasts.every((last) => last !== undefined && last.pages === lasts[0].pages);
+			heading.textContent = shared ? Deck.t('the largest tag: {n}', {n: pagesLabel(lasts[0].pages)}) : Deck.t('the largest tag:');
 			lines.forEach((line, at) =>
 			{
-				const visible = line.store.points.filter((point) => point.pages <= upTo);
+				const visible = visibles[at];
 				line.path.setAttribute('points', visible.map((point) => `${x(point.pages)},${y(point.ms)}`).join(' '));
 				line.dots.forEach((dot, index) => dot.setAttribute('opacity', index < visible.length ? '1' : '0'));
-				const last = visible[visible.length - 1];
-				values[at].textContent = last ? `${duration(last.ms)} · ${pagesLabel(last.pages)}` : '';
+				const last = lasts[at];
+				values[at].textContent = last === undefined ? '' : shared ? duration(last.ms) : `${duration(last.ms)} · ${pagesLabel(last.pages)}`;
 			});
 			
 			if(shown < sizes.length)
