@@ -18,7 +18,7 @@
 		L                run it live (only where the talk's server answers)
 		S                replay speed
 		C                the next view, where a demo has a switch (.demo-switch: its buttons pick
-		                 one - another store on top, another scale)
+		                 one - another store on top)
 		J                English / Polish (the toggle by the slide counter does the same)
 		? / H            this list of keys, in a panel over the deck (and the ? by the slide counter);
 		                 Esc, ?, H or a click beside it closes it, any other key closes it and acts.
@@ -635,8 +635,8 @@ const Deck = (() =>
 	};
 	
 	/** a demo's switch (.demo-switch): a button's data-* go onto the demo (data-stores: what the panels
-	    show; data-scale: how), it is shown pressed, and the demo plays again; with no button named, the
-	    one after the pressed one. False without a switch */
+	    show), it is shown pressed, and the demo plays again; with no button named, the one after the
+	    pressed one. False without a switch */
 	const switchDemo = (demo, chosen = null) =>
 	{
 		const buttons = [...demo.element.querySelectorAll('.demo-switch button')];

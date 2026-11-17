@@ -83,30 +83,13 @@ Deck.register('curve', (element) =>
 		const bottom = height - axisHeight;
 		
 		const all = stores.flatMap((store) => store.points);
-		const maxMs = Math.max(...all.map((point) => point.ms));
-		
-		// The pages are always on a log scale: 10 to a million, every size visible. So is the time, unless
-		// data-scale="linear": then it runs in proportion from 0, in round steps (at most five to the slowest
-		// point: 5 s), and what takes milliseconds, the versioned store at every size, lies on the axis
-		const linear = element.dataset.scale === 'linear';
-		const roundStep = (max) =>
-		{
-			const base = 10 ** Math.floor(Math.log10(max / 5));
-			
-			return [1, 2, 2.5, 5, 10].map((times) => times * base).find((step) => max / step <= 5);
-		};
-		const msStep = roundStep(maxMs);
-		const msEnd = Math.ceil(maxMs / msStep) * msStep;
-		
 		const xMin = 1;
 		const xMax = Math.log10(Math.max(...all.map((point) => point.pages)));
 		// a decade of room under the fastest point: its label never sits on the axis
 		const yMin = Math.floor(Math.log10(Math.min(...all.map((point) => point.ms))) - 0.3);
-		const yMax = Math.ceil(Math.log10(maxMs));
+		const yMax = Math.ceil(Math.log10(Math.max(...all.map((point) => point.ms))));
 		const x = (pages) => labelWidth + (Math.log10(pages) - xMin + 0.15) / (xMax - xMin + 0.3) * (chartRight - labelWidth);
-		const y = linear
-			? (ms) => bottom - ms / msEnd * (bottom - top)
-			: (ms) => bottom - (Math.log10(ms) - yMin) / (yMax - yMin) * (bottom - top);
+		const y = (ms) => bottom - (Math.log10(ms) - yMin) / (yMax - yMin) * (bottom - top);
 		
 		const svg = make('svg', {width, height, viewBox: `0 0 ${width} ${height}`, class: 'ban curve'}, stage);
 		
@@ -117,12 +100,7 @@ Deck.register('curve', (element) =>
 			make('line', {x1: x(pages), x2: x(pages), y1: top, y2: bottom + 6, class: 'tick'}, axis);
 			make('text', {x: x(pages), y: height - 8, class: 'tick-label'}, axis).textContent = pagesLabel(pages);
 		}
-		for(let ms = 0; linear && ms <= msEnd; ms+= msStep)
-		{
-			make('line', {x1: labelWidth, x2: chartRight, y1: y(ms), y2: y(ms), class: 'tick'}, axis);
-			make('text', {x: chartRight + 12, y: y(ms) + 6, class: 'tick-label y'}, axis).textContent = msEnd >= 1000 ? `${figure(ms / 1000)} s` : `${figure(ms)} ms`;
-		}
-		for(let power = yMin; linear === false && power <= yMax; power++)
+		for(let power = yMin; power <= yMax; power++)
 		{
 			const ms = 10 ** power;
 			make('line', {x1: labelWidth, x2: chartRight, y1: y(ms), y2: y(ms), class: 'tick'}, axis);
@@ -146,7 +124,7 @@ Deck.register('curve', (element) =>
 		make('text', {x: labelWidth - 16, y: middle, transform: `rotate(-90 ${labelWidth - 16} ${middle})`, class: 'axis-title vertical'}, axis).textContent = Deck.t('time to forget it');
 		
 		make('text', {x: 0, y: top + 34, class: 'panel-label'}, svg).textContent = Deck.t('One tag');
-		[Deck.t('one invalidateTags() call'), ...(linear ? [Deck.t('time: proportional'), Deck.t('pages: log scale')] : [Deck.t('both axes: log scale')])].forEach((line, row) =>
+		[Deck.t('one invalidateTags() call'), Deck.t('both axes: log scale')].forEach((line, row) =>
 		{
 			make('text', {x: 0, y: top + 66 + row * 30, class: 'panel-sub'}, svg).textContent = line;
 		});
