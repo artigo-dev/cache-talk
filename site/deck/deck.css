@@ -1749,6 +1749,17 @@ ol.sequence li .when
 	margin-top: 30px;
 }
 
+/* the same for one code block, where its points would reach the road */
+pre.code.snug
+{
+	margin-top: 28px;
+}
+
+pre.code.snug + ul.points
+{
+	margin-top: 30px;
+}
+
 .code-columns pre.code
 {
 	max-width: none;
