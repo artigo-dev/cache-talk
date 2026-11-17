@@ -16,6 +16,7 @@ use Talk\Parameter;
 use Talk\Scenario;
 use Talk\Sink;
 use Talk\Sink\Buffer;
+use Talk\Store\File;
 use Talk\Store\RedisClassic;
 
 use function array_chunk;
@@ -23,14 +24,19 @@ use function array_map;
 use function count;
 use function explode;
 use function ceil;
+use function file_get_contents;
+use function glob;
 use function hrtime;
 use function intdiv;
+use function is_dir;
 use function max;
 use function random_int;
 use function range;
+use function rmdir;
 use function round;
 use function sort;
 use function sprintf;
+use function unlink;
 use function usleep;
 
 /**
@@ -45,6 +51,9 @@ use function usleep;
  * so every store is built from its own configuration. Every page holds
  * PAGE_BYTES (1 KB) of random text, as a real one would.
  *
+ * - file: a file cache (Talk\Store\File) on a disk, where a file cache
+ *   usually is: compose.yaml's talk-disk volume, on the laptop's SSD. A file
+ *   per page, a delete per file; a visitor reads a page's file
  * - classic: our classic backend (Talk\Store\RedisClassic, the CMS's, an
  *   older fork of Colin Mollenhour's design) - a hash per page, a set per
  *   tag; forgetting is SUNION of the set, then one MULTI with a single DEL
@@ -56,6 +65,7 @@ use function usleep;
 class Ban extends Scenario
 {
 	public const array LABELS = [
+		'file' => 'A file cache (on the SSD · a delete per file)',
 		'classic' => 'A classic Redis backend (in one go)',
 		'redis' => 'php-library Redis (in batches · Lua)',
 		'redisearch' => 'php-library RediSearch (the tags indexed)',
@@ -82,6 +92,7 @@ class Ban extends Scenario
 	 * the visitors' arrivals are spread over that, so they cover the whole ban
 	 */
 	protected const array MS_PER_PAGE = [
+		'file' => 0.025,
 		'classic' => 0.0027,
 		'redis' => 0.0057,
 		'redisearch' => 0.0052,
@@ -103,9 +114,15 @@ class Ban extends Scenario
 	
 	/**
 	 * How long the workers wait for each other: a million pages take the
-	 * slowest store about 25 s to fill
+	 * slowest Redis store about 25 s to fill, the file cache on the SSD about
+	 * 90 s
 	 */
 	protected const float BARRIER_S = 300.0;
+
+	/**
+	 * The file cache's directories: on the SSD (see compose.yaml's talk-disk)
+	 */
+	protected const string DIR = '/var/talk-disk/ban';
 	
 	public function name(): string
 	{
@@ -116,7 +133,7 @@ class Ban extends Scenario
 	{
 		return [
 			'pages' => new Parameter(live: 200_000, record: 1_000_000, min: 1_000, max: 1_000_000, grid: [100_000, 1_000_000], label: 'cached pages'),
-			'stores' => new Parameter(live: 'classic,redis,versioned', record: 'classic,redis,redisearch,versioned', options: ['classic', 'redis', 'redisearch', 'versioned'], label: 'stores'),
+			'stores' => new Parameter(live: 'classic,redis,versioned', record: 'file,classic,redis,redisearch,versioned', options: ['file', 'classic', 'redis', 'redisearch', 'versioned'], label: 'stores'),
 		];
 	}
 	
@@ -144,13 +161,21 @@ class Ban extends Scenario
 			$span = max(static::MIN_SPAN_MS, $pages * static::MS_PER_PAGE[$kind] * 1.15);
 			
 			$events = new Buffer($sink);
-			(new Fleet($events, $redis, static::BARRIER_S + 60))->run($this->name(), $run, 1 + static::VISITORS, [
-				'store' => $kind,
-				'pages' => $pages,
-				'stepMs' => ceil($span / static::VISITORS),
-			], [
-				'store' => $kind,
-			]);
+			try
+			{
+				(new Fleet($events, $redis, static::BARRIER_S + 60))->run($this->name(), $run, 1 + static::VISITORS, [
+					'store' => $kind,
+					'pages' => $pages,
+					'stepMs' => ceil($span / static::VISITORS),
+				], [
+					'store' => $kind,
+				]);
+			}
+			// the file cache's directory, whatever is left in it (the visitors' page, the tag lists)
+			finally
+			{
+				static::removeDir(static::DIR . '/' . $run);
+			}
 			
 			$this->summarise($sink, $events, $kind, $pages);
 		}
@@ -165,14 +190,14 @@ class Ban extends Scenario
 		
 		if((int)$job['index'] > 0)
 		{
-			$this->visit($run, (int)$job['index'], (float)$job['stepMs']);
-			
+			$this->visit($kind, $run, (int)$job['index'], (float)$job['stepMs']);
+
 			return;
 		}
-		
+
 		$redis = Config::redis(600.0);
 		$pages = (int)$job['pages'];
-		$store = static::store($kind);
+		$store = static::store($kind, $run);
 		// the classic backend's two steps, drawn above its panel
 		if($store instanceof RedisClassic)
 		{
@@ -199,15 +224,21 @@ class Ban extends Scenario
 	
 	/**
 	 * A visitor: arrives at its moment and reads a cached page; when did it
-	 * ask, when did it get its answer?
+	 * ask, when did it get its answer? From Redis, or with the file cache, the
+	 * page's file
 	 */
 	protected function visit(
+		string $kind,
 		string $run,
 		int $index,
 		float $stepMs,
 	): void
 	{
 		$redis = Config::redis(600.0);
+		// the page's file is looked up before the clock starts: the read is what is timed
+		$file = $kind === 'file'
+			? static::fileStore($run)->itemFile(static::VISITOR_KEY)
+			: null;
 		Barrier::arrive($redis, $run, static::BARRIER_S);
 		
 		$left = ($index - 1) * $stepMs - Events::now();
@@ -218,7 +249,14 @@ class Ban extends Scenario
 		Events::emit('request', [
 			'w' => $index,
 		]);
-		$redis->get(static::VISITOR_KEY);
+		if($file === null)
+		{
+			$redis->get(static::VISITOR_KEY);
+		}
+		else
+		{
+			file_get_contents($file);
+		}
 		Events::emit('respond', [
 			'w' => $index,
 		]);
@@ -235,7 +273,19 @@ class Ban extends Scenario
 	): int
 	{
 		$value = static::pageBody();
-		
+
+		// a file per page, and the page the visitors read (not forgotten); Redis holds none of it
+		if($store instanceof File)
+		{
+			$store->set(static::VISITOR_KEY, $value, 3600, ['front-page']);
+			for($i = 0; $i < $pages; $i++)
+			{
+				$store->set('page-' . $i, $value, 3600, [static::TAG]);
+			}
+
+			return 0;
+		}
+
 		// the classic backend's own writes, through a pipeline (save() would take two round trips a page)
 		if($store instanceof RedisClassic)
 		{
@@ -342,12 +392,56 @@ class Ban extends Scenario
 	
 	protected static function store(
 		string $kind,
+		string $run,
 	): KeyValue
 	{
+		if($kind === 'file')
+		{
+			return static::fileStore($run);
+		}
+
 		Config::patch([
 			'store' => static::STORES[$kind] ?? throw new RuntimeException(sprintf('No store "%s".', $kind)),
 		]);
-		
+
 		return (new Pages())->store();
+	}
+
+	/**
+	 * The file cache of the run $run, in a directory of its own
+	 */
+	protected static function fileStore(
+		string $run,
+	): File
+	{
+		Config::patch([
+			'store' => File::class,
+			'store_options' => [
+				'dir' => static::DIR . '/' . $run,
+			],
+		]);
+		$store = (new Pages())->store();
+		if($store instanceof File === false)
+		{
+			throw new RuntimeException('The file cache is not a Talk\Store\File.');
+		}
+
+		return $store;
+	}
+
+	protected static function removeDir(
+		string $dir,
+	): void
+	{
+		if(is_dir($dir) === false)
+		{
+			return;
+		}
+
+		foreach(glob($dir . '/*') ?: [] as $path)
+		{
+			is_dir($path) ? static::removeDir($path) : @unlink($path);
+		}
+		@rmdir($dir);
 	}
 }

@@ -2078,6 +2078,58 @@ table.data tr.pair td
 	line-height: 1.5;
 }
 
+/* a demo's switch beside its heading (deck.js switchStore()): the store in the first panel, picked by a
+   click or stepped through with C */
+
+.demo-switch
+{
+	display: flex;
+	flex: none;
+	align-items: baseline;
+	gap: 12px;
+	font-family: var(--mono);
+	font-size: 19px;
+	letter-spacing: .04em;
+	white-space: nowrap;
+	color: var(--muted);
+}
+
+.demo-switch button
+{
+	padding: 4px 12px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: none;
+	font: inherit;
+	letter-spacing: inherit;
+	color: inherit;
+	cursor: pointer;
+	transition: color .15s, border-color .15s, background-color .15s;
+}
+
+.demo-switch button:hover,
+.demo-switch button:focus-visible
+{
+	outline: none;
+	color: var(--text);
+	background: var(--panel-2);
+}
+
+.demo-switch button[aria-pressed="true"]
+{
+	border-color: var(--mint);
+	color: var(--mint);
+}
+
+.demo-switch kbd
+{
+	padding: 1px 8px;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	font-family: var(--mono);
+	color: var(--text);
+}
+
 /* the title: the whole visible three quarters for the name of the talk */
 
 #title

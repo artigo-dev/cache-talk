@@ -257,10 +257,10 @@ Deck.register('ban', (element) =>
 			return {band, banEnd, phases, lanes, value, forgot, longest};
 		});
 		
-		// a legend under the last panel's labels
+		// a legend under the last panel's labels; a file cache's visitors wait for a file, not for Redis
 		const legend = make('g', {class: 'legend'}, svg);
 		[
-			['wait', Deck.t('a visitor waiting for Redis')],
+			['wait', Deck.t(segments.some((segment) => segment.store === 'file') ? 'a visitor waiting for its page' : 'a visitor waiting for Redis')],
 			['done', Deck.t('the visitor has its answer')],
 			['band', Deck.t('while the tag is being forgotten')],
 		].forEach(([kind, text], row) =>

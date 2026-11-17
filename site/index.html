@@ -1246,12 +1246,13 @@ $lock->exclusively('import:companies',
 		<div class="demo" data-demo="ban" data-stores="redis,versioned">
 			<div class="demo-head">
 				<h3><span lang="en">A million cached pages, <span class="g">nobody notices</span></span><span lang="pl">Milion stron, <span class="g">a&nbsp;nikt nic nie zauważa</span></span></h3>
-				<span class="eyebrow"><span lang="en">forgetting tags on many cached pages · batches, then one rule</span><span lang="pl">zapominanie tagów na wielu stronach · porcje, potem jedna reguła</span></span>
+				<div class="demo-switch"><button type="button" data-store="file" aria-pressed="false"><span lang="en">file cache</span><span lang="pl">cache plikowy</span></button><button type="button" data-store="classic" aria-pressed="false"><span lang="en">classic Redis</span><span lang="pl">klasyczny Redis</span></button><button type="button" data-store="redis" aria-pressed="true">Store\Redis</button><kbd>C</kbd></div>
 			</div>
 			<div class="demo-stage"></div>
 		</div>
 		<aside class="notes">
 			<p><span lang="en">The same ban as at stop 7. Milliseconds instead of seconds, and the visitors' lines do not grow.</span><span lang="pl">Ta sama czystka co na przystanku 7. Milisekundy zamiast sekund, a&nbsp;linie odwiedzających ani drgną.</span></p>
+			<p><span lang="en">C, or the switch top right, puts another store on top, the time axis following the slowest: the file cache on the SSD (a million deletes, 24.9 s; its visitors do not wait, 0.1 ms at most: each reads a file of its own), the classic backend (2.7 s, Redis frozen: the visitors wait up to 2 s), Store\Redis (5.9 s in batches, nobody waits).</span><span lang="pl">C albo przełącznik w&nbsp;prawym górnym rogu daje na górę inny store, a&nbsp;oś czasu dopasowuje się do najwolniejszego: cache plikowy na SSD (milion usunięć, 24,9&nbsp;s; odwiedzający nie czekają, najwyżej 0,1&nbsp;ms: każdy czyta swój plik), klasyczny backend (2,7&nbsp;s, Redis stoi: odwiedzający czekają do 2&nbsp;s), Store\Redis (5,9&nbsp;s porcjami, nikt nie czeka).</span></p>
 		</aside>
 	</section>
 

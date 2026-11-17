@@ -59,6 +59,7 @@ window.DeckPolish = {
 	'replay the demo on this slide': 'powtórz demo z tego slajdu',
 	'replay speed': 'prędkość powtórki',
 	'run it live (only where the talk\'s server answers)': 'uruchom na żywo (tylko tam, gdzie odpowiada serwer prezentacji)',
+	'another store on top, where a demo has a switch': 'inny store na górze, gdzie demo ma przełącznik',
 	'click, tap': 'klik, stuknięcie',
 	'right click': 'prawy klik',
 	'swipe left': 'przesunięcie w lewo',
@@ -79,6 +80,7 @@ window.DeckPolish = {
 	// ban
 	'This run has no such store.': 'W tym przebiegu nie ma takiego store\'a.',
 	'time since forgetting began →': 'czas od początku zapominania →',
+	'A file cache (on the SSD · a delete per file)': 'Cache plikowy (na dysku SSD · plik po pliku)',
 	'A classic Redis backend (in one go)': 'Klasyczny backend Redis (naraz)',
 	'php-library Redis (in batches · Lua)': 'php-library Redis (porcjami · Lua)',
 	'php-library RediSearch (the tags indexed)': 'php-library RediSearch (tagi w indeksie)',
@@ -87,6 +89,7 @@ window.DeckPolish = {
 	'reading the tag\'s list': 'odczyt listy tagu',
 	'deleting {n} pages, in one go': 'usuwanie {n} stron naraz',
 	'a visitor waiting for Redis': 'odwiedzający czeka na Redisa',
+	'a visitor waiting for its page': 'odwiedzający czeka na stronę',
 	'the visitor has its answer': 'odwiedzający ma odpowiedź',
 	'while the tag is being forgotten': 'w trakcie zapominania tagu',
 	'FORGOTTEN IN {t}': 'ZAPOMNIANO W {t}',
