@@ -1567,32 +1567,30 @@ $queue->flushAtShutdown(); // after the response</pre>
 	<section class="slide">
 		<div class="eyebrow"><span lang="en">the problem <span class="bad">//</span> why stale is not enough</span><span lang="pl">problem <span class="bad">//</span> czemu stale nie wystarcza</span></div>
 		<h2><span lang="en">stale: 60 needs a page <span class="x">to hand out</span></span><span lang="pl">stale: 60 musi mieć <span class="x">co zaserwować</span></span></h2>
-		<div class="columns why-stale">
-			<div>
-				<h4 class="g"><span lang="en">A page that expires</span><span lang="pl">Strona, która wygasa</span></h4>
-				<div class="lifeline" aria-label="fresh for 5 minutes, then expired but still handed out, then the new one">
-					<span class="fresh"><span lang="en">fresh, 5 min</span><span lang="pl">świeża, 5&nbsp;min</span></span><span class="old"><span lang="en">expired: still handed out</span><span lang="pl">wygasła: nadal serwowana</span></span><span class="new"><span lang="en">new</span><span lang="pl">nowa</span></span>
+		<div class="lifelines">
+			<div class="lifeline-row">
+				<code class="lifeline-label">stale: 60</code>
+				<div>
+					<div class="lifeline" aria-label="stale: 60 alone: fresh, then deleted by the edit, nothing to hand out while it is rebuilt, then the new one">
+						<span class="fresh"><span lang="en">fresh</span><span lang="pl">świeża</span></span><span class="cut"><span lang="en">✕ edit</span><span lang="pl">✕ edycja</span></span><span class="gone"><span lang="en">nothing: everyone waits</span><span lang="pl">nic: wszyscy czekają</span></span><span class="new"><span lang="en">new</span><span lang="pl">nowa</span></span>
+					</div>
+					<p class="lifeline-note"><span lang="en">The edit <span class="x">takes the page out of use</span> at once: it never expires, so stale has nothing to hand out.</span><span lang="pl">Edycja od razu <span class="x">unieważnia</span> stronę: ta nie zdąży wygasnąć, więc stale nie ma czego zaserwować.</span></p>
 				</div>
-				<ul class="points">
-					<li><span lang="en">After its 5 minutes the page is expired, <span class="g">but still there</span>.</span><span lang="pl">Po 5&nbsp;minutach strona wygasa, <span class="g">ale nie znika</span>.</span></li>
-					<li class="fragment"><span lang="en">stale: 60 hands it out while one request rebuilds it.</span><span lang="pl">stale: 60 ją serwuje, a&nbsp;jedno żądanie generuje ją od&nbsp;nowa.</span></li>
-				</ul>
 			</div>
-			<div>
-				<h4 class="x"><span lang="en">A page an edit reaches</span><span lang="pl">Strona dotknięta edycją</span></h4>
-				<div class="lifeline" aria-label="fresh, then deleted by the edit, nothing to hand out while it is rebuilt, then the new one">
-					<span class="fresh"><span lang="en">fresh</span><span lang="pl">świeża</span></span><span class="cut"><span lang="en">✕ edit</span><span lang="pl">✕ edycja</span></span><span class="gone"><span lang="en">nothing: everyone waits</span><span lang="pl">nic: wszyscy czekają</span></span><span class="new"><span lang="en">new</span><span lang="pl">nowa</span></span>
+			<div class="lifeline-row fragment">
+				<code class="lifeline-label">stale: 60<br><span class="g">soft: true</span></code>
+				<div>
+					<div class="lifeline" aria-label="with soft: true: fresh, then aged by the edit, still handed out while it is rebuilt, then the new one">
+						<span class="fresh"><span lang="en">fresh</span><span lang="pl">świeża</span></span><span class="aged"><span lang="en">edit</span><span lang="pl">edycja</span></span><span class="old"><span lang="en">old: still handed out</span><span lang="pl">stara: nadal serwowana</span></span><span class="new"><span lang="en">new</span><span lang="pl">nowa</span></span>
+					</div>
+					<p class="lifeline-note"><span lang="en">The edit <span class="g">marks the page old</span> instead of deleting it: stale hands it out while one request rebuilds it.</span><span lang="pl">Edycja, zamiast kasować, <span class="g">oznacza stronę jako starą</span>: stale ją serwuje, a&nbsp;jedno żądanie generuje ją od&nbsp;nowa.</span></p>
 				</div>
-				<ul class="points">
-					<li><span lang="en">The edit <span class="x">takes the page out of use</span> at once: it never expires.</span><span lang="pl">Edycja od razu <span class="x">unieważnia</span> stronę: nie zdąży wygasnąć.</span></li>
-					<li class="fragment"><span lang="en">stale: 60 has nothing to hand out: everyone waits.</span><span lang="pl">stale: 60 nie ma czego zaserwować: wszyscy czekają.</span></li>
-				</ul>
 			</div>
 		</div>
-		<p class="claim fragment"><span lang="en"><span class="g">soft: true</span>: the edit marks the page expired instead of deleting it, and stale: 60 hands it out.</span><span lang="pl"><span class="g">soft: true</span>: edycja, zamiast kasować, oznacza stronę jako wygasłą, a&nbsp;stale: 60 ją serwuje.</span></p>
+		<p class="claim fragment"><span lang="en"><span class="g">soft: true</span> is for edits only: past the TTL, stale: 60 hands out the old page without it.</span><span lang="pl"><span class="g">soft: true</span> dotyczy tylko edycji: po upływie TTL stale: 60 serwuje starą stronę i&nbsp;bez niego.</span></p>
 		<aside class="notes">
-			<p><span lang="en">The difference between the two stops in one picture. stale: 60 works on a page that has expired: past its time it is old, but it is still in the cache, so it can be handed out while one request rebuilds it. An edit does not let the page expire: invalidateTags() takes it out of use on the spot (Store\Redis deletes it, the versioned store's rule makes it a miss). Nothing is left to hand out, so the stale window never starts, and every visitor waits for the rebuild, stale: 60 or not.</span><span lang="pl">Różnica między tymi dwoma przystankami na jednym obrazku. stale: 60 działa na stronie, która wygasła: po swoim czasie jest stara, ale wciąż leży w&nbsp;cache, więc można ją serwować, a&nbsp;jedno żądanie w&nbsp;tym czasie generuje ją od nowa. Edycja nie daje stronie wygasnąć: invalidateTags() od razu wyłącza ją z&nbsp;użycia (Store\Redis ją kasuje, w&nbsp;wersjonowanym store'ze reguła robi z&nbsp;niej miss). Nie zostaje nic do zaserwowania, więc okno stale w&nbsp;ogóle się nie otwiera i&nbsp;każdy czeka na nową wersję – ze stale: 60 czy bez.</span></p>
-			<p><span lang="en">soft: true changes what the edit does: instead of deleting the page, it marks it expired, as if its time had run out. From there it is the same as stop 13: the old page is handed out while one request rebuilds it. hard: true (or delete(), clear()) still deletes at once, for edits that must show immediately.</span><span lang="pl">soft: true zmienia to, co robi edycja: zamiast kasować stronę, oznacza ją jako wygasłą, jakby skończył się jej czas. Dalej wszystko jest jak na przystanku 13: stara strona jest serwowana, a&nbsp;jedno żądanie generuje ją od nowa. hard: true (albo delete(), clear()) dalej kasuje od razu – dla edycji, które muszą być widoczne natychmiast.</span></p>
+			<p><span lang="en">One page, one edit, two calls. Top, stale: 60 alone: it covers a page whose TTL ran out (stop 13), still in the cache, so it can be handed out while one request rebuilds it. An edit does not wait for the TTL: invalidateTags() takes the page out of use on the spot (Store\Redis deletes it, the versioned store's rule makes it a miss). Nothing is left to hand out, so the stale window never opens, and every visitor waits for the rebuild.</span><span lang="pl">Jedna strona, jedna edycja, dwa wywołania. Na górze samo stale: 60: obejmuje stronę, której skończył się TTL (przystanek 13) – ta wciąż leży w&nbsp;cache, więc można ją serwować, a&nbsp;jedno żądanie w&nbsp;tym czasie generuje ją od nowa. Edycja nie czeka na TTL: invalidateTags() od razu wyłącza stronę z&nbsp;użycia (Store\Redis ją kasuje, w&nbsp;wersjonowanym store'ze reguła robi z&nbsp;niej miss). Nie zostaje nic do zaserwowania, więc okno stale w&nbsp;ogóle się nie otwiera i&nbsp;każdy czeka na nową wersję.</span></p>
+			<p><span lang="en">Bottom, the same call with soft: true: the edit marks the page old instead of deleting it, and the same stale: 60 window covers it: the old page goes out while one request rebuilds it. soft: true changes only what an edit does; a page past its TTL is handed out with stale: 60 alone. hard: true (or delete(), clear()) still deletes at once, for edits that must show immediately.</span><span lang="pl">Na dole to samo wywołanie z&nbsp;soft: true: edycja, zamiast kasować stronę, oznacza ją jako starą, i&nbsp;obejmuje ją to samo okno stale: 60 – stara strona wychodzi, a&nbsp;jedno żądanie generuje ją od nowa. soft: true zmienia tylko to, co robi edycja; stronę po upływie TTL serwuje już samo stale: 60. hard: true (albo delete(), clear()) dalej kasuje od razu – dla edycji, które muszą być widoczne natychmiast.</span></p>
 		</aside>
 	</section>
 

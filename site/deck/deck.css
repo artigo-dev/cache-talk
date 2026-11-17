@@ -1493,7 +1493,7 @@ aside.notes
 	font-size: 22px;
 }
 
-/* a cached page's life as a bar: fresh, then expired but still handed out, or deleted by an edit */
+/* a cached page's life as a bar: fresh, then deleted by an edit, or aged by it and still handed out */
 
 .lifeline
 {
@@ -1545,20 +1545,65 @@ aside.notes
 	color: var(--red);
 }
 
-.columns.why-stale
+/* the edit softened: the same mark, in the warning colour, where the hard edit's ✕ is */
+.lifeline .aged
 {
-	margin-top: 80px;
+	background: var(--yellow);
+	color: var(--bg);
+	font-weight: 700;
 }
 
-.columns.why-stale .lifeline
+/* one edit, two calls: a row per call, the edit at the same place in both */
+
+.lifelines
+{
+	margin-top: 70px;
+}
+
+.lifeline-row
+{
+	display: grid;
+	grid-template-columns: 170px 1fr;
+	column-gap: 36px;
+	align-items: start;
+}
+
+.lifeline-row + .lifeline-row
+{
+	margin-top: 46px;
+}
+
+.lifeline-label
+{
+	padding-top: 6px;
+	font-family: var(--mono);
+	font-size: 24px;
+	line-height: 1.4;
+	color: var(--muted);
+}
+
+.lifelines .lifeline
 {
 	height: 70px;
-	margin-bottom: 44px;
+	margin-bottom: 18px;
 }
 
-.columns.why-stale + .claim
+.lifelines .lifeline .cut,
+.lifelines .lifeline .aged
 {
-	margin-top: 90px;
+	flex: 0 0 140px;
+}
+
+.lifeline-note
+{
+	margin: 0;
+	font-size: 30px;
+	line-height: 1.3;
+}
+
+.lifelines + .claim
+{
+	margin-top: 70px;
 }
 
 .lifeline .new
