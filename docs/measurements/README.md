@@ -1,6 +1,6 @@
 # Measurements behind the slides
 
-Run in the talk's containers (`docker compose up -d` in `rg-dev/cache`):
+Run in the talk's containers (`docker compose up -d` in `rg-dev/cache`). They install php-library ^8.5.53, the release with every fix found while preparing the talk; use its latest version.
 
 - `trips.php`: what travels between PHP and Redis for one job (station 8's table): the steps sent from PHP against php-library's functions, counted by Redis itself (`INFO stats`, `INFO commandstats`).
 
@@ -24,4 +24,4 @@ Run in the talk's containers (`docker compose up -d` in `rg-dev/cache`):
       docker compose cp docs/measurements/expire.php app:/tmp/expire.php
       docker compose exec app php /tmp/expire.php classic 1000 1000 5
 
-The compression numbers are the median of three runs. The `ban.php` and `expire.php` numbers are single runs (2026-11-12, php-library f495b55), RediSearch's 200 000 pages twice; they move by a few percent between runs. RediSearch on a million pages more: ten runs on f495b55, 4.99 to 5.91 s (median 5.3 s), and seven on the commit before it (4a46ad5), 4.58 to 5.42 s (median 4.8 s), the two run in turns; Redis ran the same commands for both (`INFO commandstats` around the ban: a million HGET, TYPE and UNLINK, 1 201 FCALL, 400 FT.CURSOR READ; f495b55 adds one PTTL) and stored the same page (listpack, 162 B), so the slide says around 5 s.
+The compression numbers are the median of three runs. The `ban.php` and `expire.php` numbers are single runs (2026-11-12, on php-library's code of that day), RediSearch's 200 000 pages twice; they move by a few percent between runs. RediSearch on a million pages more: ten runs on that code, 4.99 to 5.91 s (median 5.3 s), and seven on the code of the day before, 4.58 to 5.42 s (median 4.8 s), the two run in turns; Redis ran the same commands for both (`INFO commandstats` around the ban: a million HGET, TYPE and UNLINK, 1 201 FCALL, 400 FT.CURSOR READ; the newer code adds one PTTL) and stored the same page (listpack, 162 B), so the slide says around 5 s.
