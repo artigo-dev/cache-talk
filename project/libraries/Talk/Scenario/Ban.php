@@ -118,7 +118,7 @@ class Ban extends Scenario
 	 * 90 s
 	 */
 	protected const float BARRIER_S = 300.0;
-
+	
 	/**
 	 * The file cache's directories: on the SSD (see compose.yaml's talk-disk)
 	 */
@@ -191,10 +191,10 @@ class Ban extends Scenario
 		if((int)$job['index'] > 0)
 		{
 			$this->visit($kind, $run, (int)$job['index'], (float)$job['stepMs']);
-
+			
 			return;
 		}
-
+		
 		$redis = Config::redis(600.0);
 		$pages = (int)$job['pages'];
 		$store = static::store($kind, $run);
@@ -273,7 +273,7 @@ class Ban extends Scenario
 	): int
 	{
 		$value = static::pageBody();
-
+		
 		// a file per page, and the page the visitors read (not forgotten); Redis holds none of it
 		if($store instanceof File)
 		{
@@ -282,10 +282,10 @@ class Ban extends Scenario
 			{
 				$store->set('page-' . $i, $value, 3600, [static::TAG]);
 			}
-
+			
 			return 0;
 		}
-
+		
 		// the classic backend's own writes, through a pipeline (save() would take two round trips a page)
 		if($store instanceof RedisClassic)
 		{
@@ -399,14 +399,14 @@ class Ban extends Scenario
 		{
 			return static::fileStore($run);
 		}
-
+		
 		Config::patch([
 			'store' => static::STORES[$kind] ?? throw new RuntimeException(sprintf('No store "%s".', $kind)),
 		]);
-
+		
 		return (new Pages())->store();
 	}
-
+	
 	/**
 	 * The file cache of the run $run, in a directory of its own
 	 */
@@ -425,10 +425,10 @@ class Ban extends Scenario
 		{
 			throw new RuntimeException('The file cache is not a Talk\Store\File.');
 		}
-
+		
 		return $store;
 	}
-
+	
 	protected static function removeDir(
 		string $dir,
 	): void
@@ -437,7 +437,7 @@ class Ban extends Scenario
 		{
 			return;
 		}
-
+		
 		foreach(glob($dir . '/*') ?: [] as $path)
 		{
 			is_dir($path) ? static::removeDir($path) : @unlink($path);

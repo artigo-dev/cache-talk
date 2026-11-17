@@ -83,29 +83,65 @@ Deck.register('curve', (element) =>
 		const bottom = height - axisHeight;
 		
 		const all = stores.flatMap((store) => store.points);
+		const maxPages = Math.max(...all.map((point) => point.pages));
+		const maxMs = Math.max(...all.map((point) => point.ms));
+
+		// data-scale="linear": both axes in proportion, from 0, in round steps (at most five to the largest
+		// value: 200 000 pages, 5 s); the small tags and the versioned store then lie on the axis.
+		// Otherwise both axes are logarithmic, every size visible
+		const linear = element.dataset.scale === 'linear';
+		const roundStep = (max) =>
+		{
+			const base = 10 ** Math.floor(Math.log10(max / 5));
+
+			return [1, 2, 2.5, 5, 10].map((times) => times * base).find((step) => max / step <= 5);
+		};
+		const pageStep = roundStep(maxPages);
+		const msStep = roundStep(maxMs);
+		const pageEnd = Math.ceil(maxPages / pageStep) * pageStep;
+		const msEnd = Math.ceil(maxMs / msStep) * msStep;
+
 		const xMin = 1;
-		const xMax = Math.log10(Math.max(...all.map((point) => point.pages)));
+		const xMax = Math.log10(maxPages);
 		// a decade of room under the fastest point: its label never sits on the axis
 		const yMin = Math.floor(Math.log10(Math.min(...all.map((point) => point.ms))) - 0.3);
-		const yMax = Math.ceil(Math.log10(Math.max(...all.map((point) => point.ms))));
-		const x = (pages) => labelWidth + (Math.log10(pages) - xMin + 0.15) / (xMax - xMin + 0.3) * (chartRight - labelWidth);
-		const y = (ms) => bottom - (Math.log10(ms) - yMin) / (yMax - yMin) * (bottom - top);
-		
+		const yMax = Math.ceil(Math.log10(maxMs));
+		const x = linear
+			? (pages) => labelWidth + 20 + pages / pageEnd * (chartRight - labelWidth - 40)
+			: (pages) => labelWidth + (Math.log10(pages) - xMin + 0.15) / (xMax - xMin + 0.3) * (chartRight - labelWidth);
+		const y = linear
+			? (ms) => bottom - ms / msEnd * (bottom - top)
+			: (ms) => bottom - (Math.log10(ms) - yMin) / (yMax - yMin) * (bottom - top);
+
 		const svg = make('svg', {width, height, viewBox: `0 0 ${width} ${height}`, class: 'ban curve'}, stage);
-		
+
 		const axis = make('g', {class: 'axis'}, svg);
-		for(let power = xMin; power <= xMax; power++)
+		if(linear)
+		{
+			for(let pages = 0; pages <= pageEnd; pages+= pageStep)
+			{
+				make('line', {x1: x(pages), x2: x(pages), y1: top, y2: bottom + 6, class: 'tick'}, axis);
+				make('text', {x: x(pages), y: height - 8, class: 'tick-label'}, axis).textContent = pagesLabel(pages);
+			}
+			for(let ms = 0; ms <= msEnd; ms+= msStep)
+			{
+				make('line', {x1: labelWidth, x2: chartRight, y1: y(ms), y2: y(ms), class: 'tick'}, axis);
+				make('text', {x: chartRight + 12, y: y(ms) + 6, class: 'tick-label y'}, axis).textContent = msEnd >= 1000 ? `${figure(ms / 1000)} s` : `${figure(ms)} ms`;
+			}
+		}
+
+		for(let power = xMin; linear === false && power <= xMax; power++)
 		{
 			const pages = 10 ** power;
 			make('line', {x1: x(pages), x2: x(pages), y1: top, y2: bottom + 6, class: 'tick'}, axis);
 			make('text', {x: x(pages), y: height - 8, class: 'tick-label'}, axis).textContent = pagesLabel(pages);
 		}
-		for(let power = yMin; power <= yMax; power++)
+		for(let power = yMin; linear === false && power <= yMax; power++)
 		{
 			const ms = 10 ** power;
 			make('line', {x1: labelWidth, x2: chartRight, y1: y(ms), y2: y(ms), class: 'tick'}, axis);
 			make('text', {x: chartRight + 12, y: y(ms) + 6, class: 'tick-label y'}, axis).textContent = msLabel(Number(ms.toPrecision(1)));
-
+			
 			// inside the decade, fainter: a line at 2 to 9 times its start, and a label at 2 and 5. On a log
 			// scale 5 s sits 70 % of the way from 1 s to 10 s; without them the eye reads the decade as even,
 			// and 5.5 s looks like 8 s
@@ -124,7 +160,7 @@ Deck.register('curve', (element) =>
 		make('text', {x: labelWidth - 16, y: middle, transform: `rotate(-90 ${labelWidth - 16} ${middle})`, class: 'axis-title vertical'}, axis).textContent = Deck.t('time to forget it');
 		
 		make('text', {x: 0, y: top + 34, class: 'panel-label'}, svg).textContent = Deck.t('One tag');
-		[Deck.t('one invalidateTags() call'), Deck.t('both axes: log scale')].forEach((line, row) =>
+		[Deck.t('one invalidateTags() call'), Deck.t(linear ? 'both axes: proportional' : 'both axes: log scale')].forEach((line, row) =>
 		{
 			make('text', {x: 0, y: top + 66 + row * 30, class: 'panel-sub'}, svg).textContent = line;
 		});

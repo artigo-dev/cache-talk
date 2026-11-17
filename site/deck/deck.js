@@ -17,8 +17,8 @@
 		R                replay the demo on this slide
 		L                run it live (only where the talk's server answers)
 		S                replay speed
-		C                the next store in the first panel, where a demo has a switch (.demo-switch:
-		                 its buttons pick one)
+		C                the next view, where a demo has a switch (.demo-switch: its buttons pick
+		                 one - another store on top, another scale)
 		J                English / Polish (the toggle by the slide counter does the same)
 		? / H            this list of keys, in a panel over the deck (and the ? by the slide counter);
 		                 Esc, ?, H or a click beside it closes it, any other key closes it and acts.
@@ -633,50 +633,42 @@ const Deck = (() =>
 		demo.foot.className = 'source';
 		demo.view.play(run.events, pace(demo));
 	};
-
-	/** a demo's switch (.demo-switch): its buttons pick the store of the first panel, the first of
-	    data-stores, and the demo plays again; with no store named, the next button's. False without one */
-	const switchStore = (demo, store = null) =>
+	
+	/** a demo's switch (.demo-switch): a button's data-* go onto the demo (data-stores: what the panels
+	    show; data-scale: how), it is shown pressed, and the demo plays again; with no button named, the
+	    one after the pressed one. False without a switch */
+	const switchDemo = (demo, chosen = null) =>
 	{
-		const buttons = [...demo.element.querySelectorAll('.demo-switch button[data-store]')];
+		const buttons = [...demo.element.querySelectorAll('.demo-switch button')];
 		if(buttons.length === 0)
 		{
 			return false;
 		}
-
+		
 		const current = buttons.findIndex((button) => button.getAttribute('aria-pressed') === 'true');
-		const chosen = store === null
-			? buttons[(current + 1) % buttons.length]
-			: buttons.find((button) => button.dataset.store === store);
-		if(chosen === undefined)
-		{
-			return false;
-		}
-
-		buttons.forEach((button) => button.setAttribute('aria-pressed', String(button === chosen)));
-		const stores = (demo.element.dataset.stores ?? '').split(',').filter(Boolean);
-		stores[0] = chosen.dataset.store;
-		demo.element.dataset.stores = stores.join(',');
+		const button = chosen ?? buttons[(current + 1) % buttons.length];
+		buttons.forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+		Object.assign(demo.element.dataset, button.dataset);
 		replay(demo);
-
+		
 		return true;
 	};
-
-	/** a click on a switch's button: that store */
+	
+	/** a click on a switch's button: that one */
 	const followSwitches = () =>
 	{
 		document.addEventListener('click', (event) =>
 		{
-			const button = event.target.closest('.demo-switch button[data-store]');
+			const button = event.target.closest('.demo-switch button');
 			const demo = button === null ? null : demoOf(button.closest('.demo'));
 			if(demo === null)
 			{
 				return;
 			}
-
+			
 			// the keys keep working after the click: Space and Enter must not press the button again
 			button.blur();
-			switchStore(demo, button.dataset.store);
+			switchDemo(demo, button);
 		});
 	};
 	
@@ -786,7 +778,7 @@ const Deck = (() =>
 				currentDemos().forEach(runDemoLive);
 			}
 		},
-		switch: () => currentDemos().forEach((demo) => switchStore(demo)),
+		switch: () => currentDemos().forEach((demo) => switchDemo(demo)),
 		blank: () => document.body.classList.toggle('blank'),
 	};
 	
@@ -1077,7 +1069,7 @@ const Deck = (() =>
 			[['R'], 'replay the demo on this slide'],
 			[['S'], 'replay speed'],
 			[['L'], 'run it live (only where the talk\'s server answers)'],
-			[['C'], 'another store on top, where a demo has a switch'],
+			[['C'], 'the next view, where a demo has a switch'],
 		]],
 		['Mouse and touch', [
 			['click, tap', 'next'],
