@@ -12,7 +12,7 @@
 		"ext-zstd": "*",
 		"artigo/cache-stampede": "^2.1.2",
 		"artigo/versioned-cache": "^2.2.2",
-		"ovos/php-library": "dev-release/8.5#a667c990d76ca0569d0a76acb084693a1ec9819c",
+		"ovos/php-library": "^8.5.53",
 		"ovos/php-module-system": "dev-release/8.5#39ad4846d7bd08a2b8e597168b42628ebb5f6778",
 		"symfony/cache": "^8.1"
 	},

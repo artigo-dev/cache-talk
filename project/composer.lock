@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d40c02bdadfd3f8585f6e51728184d95",
+    "content-hash": "f806fad464eb52cabe35b657380e3249",
     "packages": [
         {
             "name": "artigo/cache-stampede",
@@ -222,16 +222,16 @@
         },
         {
             "name": "ovos/php-library",
-            "version": "dev-release/8.5",
+            "version": "v8.5.53",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ovos/php-library.git",
-                "reference": "a667c990d76ca0569d0a76acb084693a1ec9819c"
+                "reference": "8f62f308538417a6eab81a6747159c3e04a94f30"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ovos/php-library/zipball/a667c990d76ca0569d0a76acb084693a1ec9819c",
-                "reference": "a667c990d76ca0569d0a76acb084693a1ec9819c",
+                "url": "https://api.github.com/repos/ovos/php-library/zipball/8f62f308538417a6eab81a6747159c3e04a94f30",
+                "reference": "8f62f308538417a6eab81a6747159c3e04a94f30",
                 "shasum": ""
             },
             "require": {
@@ -283,7 +283,7 @@
             ],
             "description": "A batteries-included MVC framework and infrastructure toolkit for modern PHP: a cache that never stampedes (MemoLock), lazy RedisJSON sessions, filesystem routing, relations as attributes with zero N+1, a live profiler and a self-wiring DI container.",
             "homepage": "https://github.com/ovos/php-library",
-            "time": "2026-11-17T10:34:15+00:00"
+            "time": "2026-11-17T11:19:46+00:00"
         },
         {
             "name": "ovos/php-module-system",
@@ -996,7 +996,6 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "ovos/php-library": 20,
         "ovos/php-module-system": 20
     },
     "prefer-stable": true,
