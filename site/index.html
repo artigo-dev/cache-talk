@@ -1574,7 +1574,7 @@ $queue->flushAtShutdown(); // after the response</pre>
 					<div class="lifeline" aria-label="stale: 60 alone: fresh, then deleted by the edit, nothing to hand out while it is rebuilt, then the new one">
 						<span class="fresh"><span lang="en">fresh</span><span lang="pl">świeża</span></span><span class="cut"><span lang="en">✕ edit</span><span lang="pl">✕ edycja</span></span><span class="gone"><span lang="en">nothing: everyone waits</span><span lang="pl">nic: wszyscy czekają</span></span><span class="new"><span lang="en">new</span><span lang="pl">nowa</span></span>
 					</div>
-					<p class="lifeline-note"><span lang="en">The edit <span class="x">takes the page out of use</span> at once: it never expires, so stale has nothing to hand out.</span><span lang="pl">Edycja od razu <span class="x">unieważnia</span> stronę, więc stale nie ma czego zaserwować.</span></p>
+					<p class="lifeline-note"><span lang="en">The edit <span class="x">takes the page out of use</span> at once: it never expires, so <b>stale</b> has nothing to hand out.</span><span lang="pl">Edycja od razu <span class="x">unieważnia</span> stronę, więc <b>stale</b> nie ma czego zaserwować.</span></p>
 				</div>
 			</div>
 			<div class="lifeline-row fragment">
@@ -1583,7 +1583,7 @@ $queue->flushAtShutdown(); // after the response</pre>
 					<div class="lifeline" aria-label="with soft: true: fresh, then aged by the edit, still handed out while it is rebuilt, then the new one">
 						<span class="fresh"><span lang="en">fresh</span><span lang="pl">świeża</span></span><span class="aged"><span lang="en">edit</span><span lang="pl">edycja</span></span><span class="old"><span lang="en">old: still handed out</span><span lang="pl">stara: nadal serwowana</span></span><span class="new"><span lang="en">new</span><span lang="pl">nowa</span></span>
 					</div>
-					<p class="lifeline-note"><span lang="en">The edit <span class="g">marks the page old</span> instead of deleting it: stale hands it out while one request rebuilds it.</span><span lang="pl">Edycja, zamiast kasować stronę, <span class="g">oznacza ją jako starą</span>: stale serwuje ją dalej, a&nbsp;jedno żądanie generuje nową.</span></p>
+					<p class="lifeline-note"><span lang="en">The edit <span class="g">marks the page old</span> instead of deleting it: <b>stale</b> hands it out while one request rebuilds it.</span><span lang="pl">Edycja, zamiast kasować stronę, <span class="g">oznacza ją jako starą</span>: <b>stale</b> serwuje ją dalej, a&nbsp;jedno żądanie generuje nową.</span></p>
 				</div>
 			</div>
 		</div>
