@@ -1,4 +1,7 @@
-# The deck on GitHub Pages: site/ as it is, nothing built, nothing run.
+# The deck on GitHub Pages: site/ as it is, nothing built, nothing run, except
+# that index.html's scripts and stylesheet get the commit as ?v=. Pages keeps
+# every file 10 minutes; with it, a plain reload after a deploy fetches them new
+# instead of mixing the new page with the old scripts.
 # Two jobs, as GitHub's own Pages workflow has it: the deploy job starts once
 # the upload is complete (in one job it sometimes found no artifact yet).
 name: pages
@@ -23,6 +26,15 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - name: Version the scripts and the stylesheet
+              run: |
+                  version="${GITHUB_SHA::7}"
+                  sed -i -E "s#((src|href)=\"(deck|data)/[^\"?]+\.(js|css))\"#\1?v=${version}\"#g" site/index.html
+                  grep -c "?v=${version}" site/index.html
+                  if grep -E '(src|href)="(deck|data)/[^"?]+\.(js|css)"' site/index.html; then
+                      echo 'a script or stylesheet above has no ?v='
+                      exit 1
+                  fi
             - uses: actions/configure-pages@v5
             - uses: actions/upload-pages-artifact@v3
               with:
