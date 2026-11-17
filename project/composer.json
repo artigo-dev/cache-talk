@@ -10,9 +10,9 @@
 		"ext-redis": "*",
 		"ext-yaml": "*",
 		"ext-zstd": "*",
-		"artigo/cache-stampede": "^2.0.1",
-		"artigo/versioned-cache": "^2.0.4",
-		"ovos/php-library": "dev-release/8.5#c6e3a2509c13a18a96efc4ebde0075593b10748b",
+		"artigo/cache-stampede": "^2.1.2",
+		"artigo/versioned-cache": "^2.2.2",
+		"ovos/php-library": "dev-release/8.5#a667c990d76ca0569d0a76acb084693a1ec9819c",
 		"ovos/php-module-system": "dev-release/8.5#39ad4846d7bd08a2b8e597168b42628ebb5f6778",
 		"symfony/cache": "^8.1"
 	},

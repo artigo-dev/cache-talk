@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4807b06fcdd54b35c109e63d94f9923a",
+    "content-hash": "d40c02bdadfd3f8585f6e51728184d95",
     "packages": [
         {
             "name": "artigo/cache-stampede",
-            "version": "v2.0.1",
+            "version": "v2.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/artigo-dev/cache-stampede.git",
-                "reference": "3cfab7a9a053c5a3f2aebbe36efaecd695344721"
+                "reference": "59ae6e593117b4cc02e2e899c1d8e27df8f521d7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/artigo-dev/cache-stampede/zipball/3cfab7a9a053c5a3f2aebbe36efaecd695344721",
-                "reference": "3cfab7a9a053c5a3f2aebbe36efaecd695344721",
+                "url": "https://api.github.com/repos/artigo-dev/cache-stampede/zipball/59ae6e593117b4cc02e2e899c1d8e27df8f521d7",
+                "reference": "59ae6e593117b4cc02e2e899c1d8e27df8f521d7",
                 "shasum": ""
             },
             "require": {
@@ -69,23 +69,22 @@
             ],
             "support": {
                 "issues": "https://github.com/artigo-dev/cache-stampede/issues",
-                "source": "https://github.com/artigo-dev/cache-stampede/tree/v2.0.1"
+                "source": "https://github.com/artigo-dev/cache-stampede/tree/v2.1.2"
             },
-            "time": "2026-11-07T22:03:24+00:00",
-            "published-time": "2026-11-09T08:29:51+00:00"
+            "time": "2026-11-17T10:27:31+00:00"
         },
         {
             "name": "artigo/versioned-cache",
-            "version": "v2.0.4",
+            "version": "v2.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/artigo-dev/versioned-cache.git",
-                "reference": "dc242fd52ad4e53c90f70e4d732fcdcf25f214c8"
+                "reference": "3f3e8ab6ad5a1ed3f960529177858e5933509c6b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/artigo-dev/versioned-cache/zipball/dc242fd52ad4e53c90f70e4d732fcdcf25f214c8",
-                "reference": "dc242fd52ad4e53c90f70e4d732fcdcf25f214c8",
+                "url": "https://api.github.com/repos/artigo-dev/versioned-cache/zipball/3f3e8ab6ad5a1ed3f960529177858e5933509c6b",
+                "reference": "3f3e8ab6ad5a1ed3f960529177858e5933509c6b",
                 "shasum": ""
             },
             "require": {
@@ -143,10 +142,9 @@
             ],
             "support": {
                 "issues": "https://github.com/artigo-dev/versioned-cache/issues",
-                "source": "https://github.com/artigo-dev/versioned-cache/tree/v2.0.4"
+                "source": "https://github.com/artigo-dev/versioned-cache/tree/v2.2.2"
             },
-            "time": "2026-11-10T20:37:20+00:00",
-            "published-time": "2026-11-10T20:40:08+00:00"
+            "time": "2026-11-17T10:31:32+00:00"
         },
         {
             "name": "cocur/slugify",
@@ -220,8 +218,7 @@
                 "issues": "https://github.com/cocur/slugify/issues",
                 "source": "https://github.com/cocur/slugify/tree/v4.7.1"
             },
-            "time": "2025-11-27T18:57:36+00:00",
-            "published-time": "2025-11-27T18:58:48+00:00"
+            "time": "2025-11-27T18:57:36+00:00"
         },
         {
             "name": "ovos/php-library",
@@ -229,12 +226,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ovos/php-library.git",
-                "reference": "c6e3a2509c13a18a96efc4ebde0075593b10748b"
+                "reference": "a667c990d76ca0569d0a76acb084693a1ec9819c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ovos/php-library/zipball/c6e3a2509c13a18a96efc4ebde0075593b10748b",
-                "reference": "c6e3a2509c13a18a96efc4ebde0075593b10748b",
+                "url": "https://api.github.com/repos/ovos/php-library/zipball/a667c990d76ca0569d0a76acb084693a1ec9819c",
+                "reference": "a667c990d76ca0569d0a76acb084693a1ec9819c",
                 "shasum": ""
             },
             "require": {
@@ -286,7 +283,7 @@
             ],
             "description": "A batteries-included MVC framework and infrastructure toolkit for modern PHP: a cache that never stampedes (MemoLock), lazy RedisJSON sessions, filesystem routing, relations as attributes with zero N+1, a live profiler and a self-wiring DI container.",
             "homepage": "https://github.com/ovos/php-library",
-            "time": "2026-11-16T00:39:43+00:00"
+            "time": "2026-11-17T10:34:15+00:00"
         },
         {
             "name": "ovos/php-module-system",
@@ -382,8 +379,7 @@
             "support": {
                 "source": "https://github.com/php-fig/cache/tree/3.0.0"
             },
-            "time": "2021-02-03T23:26:27+00:00",
-            "published-time": "2021-02-03T23:27:34+00:00"
+            "time": "2021-02-03T23:26:27+00:00"
         },
         {
             "name": "psr/container",
@@ -436,8 +432,7 @@
                 "issues": "https://github.com/php-fig/container/issues",
                 "source": "https://github.com/php-fig/container/tree/2.0.2"
             },
-            "time": "2021-11-05T16:47:00+00:00",
-            "published-time": "2021-11-05T16:53:27+00:00"
+            "time": "2021-11-05T16:47:00+00:00"
         },
         {
             "name": "psr/log",
@@ -487,8 +482,7 @@
             "support": {
                 "source": "https://github.com/php-fig/log/tree/3.0.2"
             },
-            "time": "2024-09-11T13:17:53+00:00",
-            "published-time": "2024-09-11T13:21:14+00:00"
+            "time": "2024-09-11T13:17:53+00:00"
         },
         {
             "name": "symfony/cache",
@@ -587,8 +581,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-11-01T22:27:46+00:00",
-            "published-time": "2026-11-04T11:31:57+00:00"
+            "time": "2026-11-01T22:27:46+00:00"
         },
         {
             "name": "symfony/cache-contracts",
@@ -668,8 +661,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-26T07:05:14+00:00",
-            "published-time": "2026-11-04T11:25:38+00:00"
+            "time": "2026-09-26T07:05:14+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -740,8 +732,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-16T14:15:10+00:00",
-            "published-time": "2026-11-04T11:25:34+00:00"
+            "time": "2026-09-16T14:15:10+00:00"
         },
         {
             "name": "symfony/polyfill-deepclone",
@@ -828,8 +819,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-14T07:17:09+00:00",
-            "published-time": "2026-10-14T09:42:25+00:00"
+            "time": "2026-10-14T07:17:09+00:00"
         },
         {
             "name": "symfony/service-contracts",
@@ -916,8 +906,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-20T17:38:25+00:00",
-            "published-time": "2026-11-04T11:25:33+00:00"
+            "time": "2026-10-20T17:38:25+00:00"
         },
         {
             "name": "symfony/var-exporter",
@@ -1000,8 +989,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-22T14:30:01+00:00",
-            "published-time": "2026-10-28T18:24:08+00:00"
+            "time": "2026-10-22T14:30:01+00:00"
         }
     ],
     "packages-dev": [],
@@ -1022,5 +1010,5 @@
         "ext-zstd": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.11.0"
+    "plugin-api-version": "2.9.0"
 }
