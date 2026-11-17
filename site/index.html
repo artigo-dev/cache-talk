@@ -1203,7 +1203,7 @@ $lock->exclusively('import:companies',
 		</div>
 		<ul class="points">
 			<li><span lang="en">Forgetting: one rule, a handful of commands, no matter how many cached pages match.</span><span lang="pl">Zapomnienie: jedna reguła, kilka poleceń, bez względu na to, ile stron pasuje.</span></li>
-			<li><span lang="en">Reading: one fetch, then a check against the rules newer than the cached page's stamp.</span><span lang="pl">Odczyt: jedno pobranie, potem sprawdzenie reguł nowszych niż znacznik strony.</span></li>
+			<li><span lang="en">Reading: one fetch, then a check against the rules newer than the cached page's stamp (the newest rule when it was saved).</span><span lang="pl">Odczyt: jedno pobranie, potem sprawdzenie reguł nowszych niż znacznik strony (najnowsza reguła w&nbsp;chwili zapisu).</span></li>
 			<li class="bad fragment"><span lang="en"><span class="x">The cost on fetch:</span> the check in PHP, and at most one more read from Redis per second per server, made by one request and shared with all through APCu.</span><span lang="pl"><span class="x">Koszt przy odczycie:</span> sprawdzenie w&nbsp;PHP plus co najwyżej jeden dodatkowy odczyt z&nbsp;Redisa na sekundę na serwer; robi go jedno żądanie, a&nbsp;przez APCu korzystają z&nbsp;niego wszystkie.</span></li>
 		</ul>
 		<div class="term"><b>stream</b><span><span lang="en">a list in Redis you can only add to; every entry gets a number that only grows.</span><span lang="pl">lista w&nbsp;Redisie tylko do dopisywania; każdy wpis dostaje coraz większy numer.</span></span></div>
