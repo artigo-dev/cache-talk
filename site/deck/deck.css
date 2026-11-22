@@ -1829,6 +1829,92 @@ pre.code.compact + ul.points
 	grid-template-columns: 1fr 1.45fr;
 }
 
+/* the entries of a stream inside a flow box, as XRANGE lists them: the id, then the fields */
+
+.flow .box table.entries
+{
+	margin: 10px auto 0;
+	border-collapse: collapse;
+	font-family: var(--mono);
+	font-size: 17px;
+	font-weight: 400;
+	letter-spacing: .02em;
+	text-align: left;
+	text-transform: none;
+	white-space: nowrap;
+}
+
+.flow .box table.entries th
+{
+	padding: 0 13px 6px 0;
+	font-size: 14px;
+	font-weight: 400;
+	letter-spacing: .14em;
+	color: var(--muted);
+	text-transform: uppercase;
+	border-bottom: 1px solid var(--border);
+}
+
+.flow .box table.entries td
+{
+	padding: 4px 13px 0 0;
+	color: var(--muted);
+}
+
+.flow .box table.entries :is(th, td):last-child
+{
+	padding-right: 0;
+}
+
+.flow .box table.entries tr.hl td
+{
+	color: var(--mint);
+}
+
+/* where the reading page's stamp falls among the entries: the rules above it are not looked at */
+
+.flow .box table.entries tr.stamp td
+{
+	padding: 5px 0 0;
+	font-size: 14px;
+	letter-spacing: .04em;
+	text-align: center;
+	color: var(--cyan);
+}
+
+.flow .box table.entries tr.stamp td > span
+{
+	display: block;
+	padding-top: 3px;
+	border-top: 1px dashed var(--cyan);
+}
+
+.flow .box table.entries tr.stamp + tr td
+{
+	padding-top: 4px;
+}
+
+.flow .box table.entries td.at
+{
+	color: var(--muted);
+}
+
+/* under a box's facts, how it decides: set off by a line */
+
+.flow .box small.how
+{
+	margin-top: 12px;
+	padding-top: 10px;
+	border-top: 1px solid var(--border);
+	line-height: 1.3;
+}
+
+.flow .box small.how b
+{
+	color: var(--mint);
+	font-weight: 400;
+}
+
 /* a flow that forks: several boxes stacked at one step (a load balancer's servers) */
 
 .flow .stack
