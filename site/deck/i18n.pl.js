@@ -87,6 +87,8 @@ window.DeckPolish = {
 	'php-library RedisVersioned (one rule)': 'php-library RedisVersioned (jedna reguła)',
 	'{n} cached pages · one tag': '{n} stron · jeden tag',
 	'reading the tag\'s list': 'odczyt listy tagu',
+	'reading tag list: {n}': 'odczyt listy tagu: {n}',
+	'{m}M': '{m} mln',
 	'deleting {n} pages, in one go': 'usuwanie {n} stron naraz',
 	'a visitor waiting for Redis': 'odwiedzający czeka na Redisa',
 	'a visitor waiting for its page': 'odwiedzający czeka na stronę',

@@ -55,12 +55,18 @@ Deck.register('ban', (element) =>
 	};
 	
 	/** a step's name in the language on screen: the deleting step names its pages, a number that differs
-	    between runs */
-	const stepName = (name) =>
+	    between runs; reading the list says how long it is, one entry per page with the tag */
+	const stepName = (name, pages) =>
 	{
 		const deleting = /^deleting (.+) pages, in one go$/.exec(name);
+		if(deleting !== null)
+		{
+			return Deck.t('deleting {n} pages, in one go', {n: deleting[1]});
+		}
 		
-		return deleting === null ? Deck.t(name) : Deck.t('deleting {n} pages, in one go', {n: deleting[1]});
+		return name === "reading the tag's list"
+			? Deck.t("reading tag list: {n}", {n: pages % 1_000_000 === 0 ? Deck.t('{m}M', {m: pages / 1_000_000}) : pages.toLocaleString('en').replace(/,/g, ' ')})
+			: Deck.t(name);
 	};
 	
 	const reset = () =>
@@ -206,7 +212,7 @@ Deck.register('ban', (element) =>
 				const next = index + 1 < done.length ? x(done[index + 1].start - segment.start) : labelWidth + chartWidth;
 				const fit = Math.floor((next - 12 - left) / charWidth);
 				
-				return {left, fit, lines: wrap(stepName(phase.name), fit)};
+				return {left, fit, lines: wrap(stepName(phase.name, segment.pages), fit)};
 			});
 			const named = names.every(({fit, lines}) => lines.every((line) => line.length <= fit));
 			const rows = named ? Math.max(0, ...names.map(({lines}) => lines.length)) : 0;
