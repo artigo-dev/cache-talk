@@ -828,6 +828,31 @@ svg.stampede .stamp-l
 	display: none;
 }
 
+/* the fragments left on this slide (+3): lit while some are, dim at +0 */
+
+.chrome .left
+{
+	color: var(--text);
+}
+
+.presenter .left
+{
+	color: var(--mint);
+}
+
+.chrome .left.done,
+.presenter .left.done
+{
+	color: var(--muted);
+	opacity: .55;
+}
+
+.chrome .left[hidden],
+.presenter .left[hidden]
+{
+	display: none;
+}
+
 .chrome:hover
 {
 	opacity: 1;

@@ -29,6 +29,9 @@
 		swipe right      back (no swipe while zoomed in: the finger pans the slide then)
 		tap              next (a tap is a click)
 	
+	By the slide counter, on a slide with more than one fragment (bullets, a stepped demo's steps): +3, the
+	presses of → left before the next slide; a dim +0 once all are shown. The presenter's window shows it too.
+	
 	?all in the URL shows every fragment at once, for reading the deck rather than presenting it.
 	?lang=pl opens it in Polish; otherwise the language last chosen, else English.
 	
@@ -371,6 +374,30 @@ const Deck = (() =>
 	
 	const shownCount = (slide) => fragments(slide).filter((fragment) => fragment.classList.contains('shown')).length;
 	
+	/** how many presses of → are left on this slide (bullets and a stepped demo's steps alike); null where the
+	   slide has fewer than two, so there is nothing to count */
+	const leftCount = (slide) =>
+	{
+		const all = fragments(slide);
+		
+		return all.length > 1 && params.has('all') === false ? all.length - shownCount(slide) : null;
+	};
+	
+	/** the counter by the slide number: +3 while three are left, a dim +0 once all are shown */
+	const showLeft = (element, left) =>
+	{
+		element.hidden = left === null;
+		element.textContent = `+${left ?? 0}`;
+		element.classList.toggle('done', left === 0);
+	};
+	
+	/** after → or ←: the counter, and the presenter's window */
+	const stepped = () =>
+	{
+		showLeft(chrome.querySelector('.left'), leftCount(slides[index]));
+		broadcast();
+	};
+	
 	const show = (target, step = 0) =>
 	{
 		index = Math.max(0, Math.min(slides.length - 1, target));
@@ -391,7 +418,7 @@ const Deck = (() =>
 		}
 		
 		chrome.querySelector('.count').textContent = `${index + 1} / ${slides.length}`;
-		broadcast();
+		stepped();
 	};
 	
 	const next = () =>
@@ -402,7 +429,7 @@ const Deck = (() =>
 		{
 			hidden.classList.add('shown');
 			stepDemos(slide);
-			broadcast();
+			stepped();
 			
 			return;
 		}
@@ -418,7 +445,7 @@ const Deck = (() =>
 		{
 			shown.at(-1).classList.remove('shown');
 			stepDemos(slide);
-			broadcast();
+			stepped();
 			
 			return;
 		}
@@ -452,7 +479,7 @@ const Deck = (() =>
 	{
 		if(channel && embedded === false)
 		{
-			channel.postMessage({type: 'state', index, step: shownCount(slides[index])});
+			channel.postMessage({type: 'state', index, step: shownCount(slides[index]), left: leftCount(slides[index])});
 		}
 	};
 	
@@ -465,7 +492,7 @@ const Deck = (() =>
 	{
 		document.body.innerHTML = `
 			<div class="presenter">
-				<div class="clock"><span class="now"></span><span class="elapsed">00:00</span><span class="where"></span></div>
+				<div class="clock"><span class="now"></span><span class="elapsed">00:00</span><span><span class="where"></span> <span class="left" hidden></span></span></div>
 				<div class="frames">
 					<iframe class="current" title="current slide"></iframe>
 					<iframe class="upcoming" title="next slide"></iframe>
@@ -477,17 +504,19 @@ const Deck = (() =>
 		const upcoming = document.querySelector('.presenter .upcoming');
 		const notes = document.querySelector('.presenter .notes .text');
 		const where = document.querySelector('.presenter .where');
+		const left = document.querySelector('.presenter .left');
 		const started = Date.now();
 		let last = -1;
 		
 		current.src = `${base}#/${index + 1}`;
 		upcoming.src = `${base}#/${index + 2}`;
 		
-		const follow = ({index: at, step}) =>
+		const follow = ({index: at, step, left: remaining = null}) =>
 		{
 			current.contentWindow?.postMessage({type: 'state', index: at, step}, '*');
 			upcoming.contentWindow?.postMessage({type: 'state', index: at + 1, step: 0}, '*');
 			where.textContent = `${at + 1} / ${slides.length}`;
+			showLeft(left, remaining);
 			if(at !== last)
 			{
 				last = at;
@@ -1144,7 +1173,7 @@ const Deck = (() =>
 		}
 		
 		chrome.className = 'chrome';
-		chrome.innerHTML = `<button type="button" class="help-toggle">?</button><button type="button" class="theme"><span class="dark">${moon}</span> · <span class="light">${sun}</span></button><button type="button" class="language"><span class="en">EN</span> · <span class="pl">PL</span></button><span class="count"></span>`;
+		chrome.innerHTML = `<button type="button" class="help-toggle">?</button><button type="button" class="theme"><span class="dark">${moon}</span> · <span class="light">${sun}</span></button><button type="button" class="language"><span class="en">EN</span> · <span class="pl">PL</span></button><span class="left" hidden></span><span class="count"></span>`;
 		findStations();
 		addMiniRoads();
 		addDemoFeet();
