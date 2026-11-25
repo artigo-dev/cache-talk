@@ -1051,7 +1051,7 @@ $lock->exclusively('import:companies',
 				<h4><span lang="en">Measured: one tag, a million pages</span><span lang="pl">Pomiar: jeden tag, milion stron</span></h4>
 				<ul class="points">
 					<li class="bad"><span lang="en"><span class="x">Classic, fresh database: about 2.5&nbsp;s,</span> everyone else waiting up to 2&nbsp;s.</span><span lang="pl"><span class="x">Klasyczny backend, świeża baza: około 2,5&nbsp;s,</span> reszta czeka do 2&nbsp;s.</span></li>
-					<li><span lang="en"><span class="g">RediSearch: around 5&nbsp;s,</span> but nobody waited over 10&nbsp;ms.</span><span lang="pl"><span class="g">RediSearch: około 5&nbsp;s,</span> ale nikt nie czekał ponad 10&nbsp;ms.</span></li>
+					<li><span lang="en"><span class="g">RediSearch: around 5&nbsp;s</span> for the one who forgets the tag; other requests to Redis waited 10&nbsp;ms at most.</span><span lang="pl"><span class="g">RediSearch: około 5&nbsp;s</span> czeka ten, kto zapomina tag; inne żądania do Redisa najwyżej 10&nbsp;ms.</span></li>
 					<li class="bad"><span lang="en"><span class="x">After weeks:</span> classic 8.7&nbsp;s, everyone waiting up to 3.9&nbsp;s. RediSearch: still around 5&nbsp;s.</span><span lang="pl"><span class="x">Po tygodniach:</span> klasyczny 8,7&nbsp;s, reszta czeka do 3,9&nbsp;s. RediSearch: nadal około 5&nbsp;s.</span></li>
 					<li><span lang="en"><span class="g">Pages expired: nothing left.</span> Classic kept all their names in its lists (28 MB).</span><span lang="pl"><span class="g">Strony wygasły: nic nie zostało.</span> Klasyczny miał w&nbsp;listach wszystkie ich nazwy (28&nbsp;MB).</span></li>
 				</ul>
@@ -1130,14 +1130,14 @@ $lock->exclusively('import:companies',
 			<div>
 				<h4 class="g"><span lang="en">The verdict</span><span lang="pl">Werdykt</span></h4>
 				<ul class="points">
-					<li class="fragment"><span lang="en"><span class="g">Nobody waits:</span> under 7&nbsp;ms, at any size.</span><span lang="pl"><span class="g">Nikt nie czeka:</span> poniżej 7&nbsp;ms, przy każdej skali.</span></li>
+					<li class="fragment"><span lang="en"><span class="g">Other requests to Redis do not wait:</span> under 7&nbsp;ms, at any size.</span><span lang="pl"><span class="g">Inne żądania do Redisa nie czekają:</span> poniżej 7&nbsp;ms, przy każdej skali.</span></li>
 					<li class="fragment"><span lang="en"><span class="g">Nothing left behind:</span> an expired page drops out of the index.</span><span lang="pl"><span class="g">Nic nie zostaje:</span> wygasła strona wypada z&nbsp;indeksu.</span></li>
-					<li class="bad fragment"><span lang="en"><span class="x">Beyond 200&nbsp;000, deleting decides:</span> about 5&nbsp;µs a page, however the pages are found.</span><span lang="pl"><span class="x">Powyżej 200&nbsp;000 decyduje usuwanie:</span> około 5&nbsp;µs na stronę, wszystko jedno, jak je znajdziemy.</span></li>
+					<li class="bad fragment"><span lang="en"><span class="x">Beyond 200&nbsp;000, the one who forgets the tag waits:</span> over a second, and old pages are served until it ends. Every page is one delete, however the pages are found.</span><span lang="pl"><span class="x">Powyżej 200&nbsp;000 czeka ten, kto zapomina tag:</span> ponad sekundę, a&nbsp;do końca serwujemy stare strony. Każda strona to jedno usunięcie, wszystko jedno, jak je znajdziemy.</span></li>
 				</ul>
 			</div>
 		</div>
 		<aside class="notes">
-			<p><span lang="en">The verdict on RediSearch: an interesting experiment, and a good store for a small site. Measured, one tag forgotten with RediSearch, 1 KB pages, a fresh Redis each: 50&nbsp;000 pages 0.22 s, 100&nbsp;000 pages 0.46 s, 200&nbsp;000 pages 0.99 s, 300&nbsp;000 pages 1.60 s, 500&nbsp;000 pages 2.51 s, a million 5.15 s; about 4.4 to 5.3 µs per page, and nobody waiting more than 7 ms at any size. So up to about 200&nbsp;000 cached pages on a tag, forgetting it takes under a second; beyond that, one delete per page decides the time, no matter how the pages are found.</span><span lang="pl">Werdykt w&nbsp;sprawie RediSearch: ciekawy eksperyment i&nbsp;dobry store dla małego serwisu. Pomiary, jeden tag zapominany przez RediSearch, strony po 1&nbsp;KB, za każdym razem świeży Redis: 50&nbsp;000 stron – 0,22&nbsp;s, 100&nbsp;000 – 0,46&nbsp;s, 200&nbsp;000 – 0,99&nbsp;s, 300&nbsp;000 – 1,60&nbsp;s, 500&nbsp;000 – 2,51&nbsp;s, milion – 5,15&nbsp;s; od około 4,4 do 5,3&nbsp;µs na stronę, a&nbsp;nikt, przy żadnej skali, nie czekał dłużej niż 7&nbsp;ms. Czyli dopóki tag ma do około 200&nbsp;000 stron w&nbsp;cache, jego zapomnienie trwa poniżej sekundy; powyżej o&nbsp;czasie decyduje jedno usunięcie na stronę, wszystko jedno, jak te strony znajdujemy.</span></p>
+			<p><span lang="en">The verdict on RediSearch: an interesting experiment, and a good store for a small site. Measured, one tag forgotten with RediSearch, 1 KB pages, a fresh Redis each: 50&nbsp;000 pages 0.22 s, 100&nbsp;000 pages 0.46 s, 200&nbsp;000 pages 0.99 s, 300&nbsp;000 pages 1.60 s, 500&nbsp;000 pages 2.51 s, a million 5.15 s; about 4.4 to 5.3 µs per page, and nobody waiting more than 7 ms at any size. So up to about 200&nbsp;000 cached pages on a tag, forgetting it takes under a second; beyond that, one delete per page decides the time, no matter how the pages are found. That is a limit of deleting page by page, not a fault of RediSearch: the classic backend pays the same per page. Who waits is the request that forgets the tag, the editor saving an article, and until it ends some of the tag's old pages can still be served. Everyone else waits under 7 ms.</span><span lang="pl">Werdykt w&nbsp;sprawie RediSearch: ciekawy eksperyment i&nbsp;dobry store dla małego serwisu. Pomiary, jeden tag zapominany przez RediSearch, strony po 1&nbsp;KB, za każdym razem świeży Redis: 50&nbsp;000 stron – 0,22&nbsp;s, 100&nbsp;000 – 0,46&nbsp;s, 200&nbsp;000 – 0,99&nbsp;s, 300&nbsp;000 – 1,60&nbsp;s, 500&nbsp;000 – 2,51&nbsp;s, milion – 5,15&nbsp;s; od około 4,4 do 5,3&nbsp;µs na stronę, a&nbsp;nikt, przy żadnej skali, nie czekał dłużej niż 7&nbsp;ms. Czyli dopóki tag ma do około 200&nbsp;000 stron w&nbsp;cache, jego zapomnienie trwa poniżej sekundy; powyżej o&nbsp;czasie decyduje jedno usunięcie na stronę, wszystko jedno, jak te strony znajdujemy. To granica usuwania strona po stronie, a&nbsp;nie wada RediSearcha: klasyczny backend płaci tyle samo za stronę. Czeka żądanie, które zapomina tag, czyli redaktor zapisujący artykuł, a&nbsp;do końca część starych stron z&nbsp;tym tagiem może jeszcze zostać podana. Wszyscy inni czekają poniżej 7&nbsp;ms.</span></p>
 			<p><span lang="en">The chart is that run: a straight line, twice the pages, twice the time, because every page is one delete. A series of its own, a fresh Redis per size, so a million took 5.15 s here; from run to run RediSearch takes 5 to 6 s for a million.</span><span lang="pl">Wykres to właśnie ten pomiar: prosta linia, dwa razy więcej stron, dwa razy dłużej, bo każda strona to jedno usunięcie. To osobna seria, świeży Redis dla każdego rozmiaru, stąd milion w&nbsp;5,15&nbsp;s; między przebiegami RediSearch potrzebuje na milion od 5 do 6&nbsp;s.</span></p>
 		</aside>
 	</section>
@@ -1801,6 +1801,34 @@ $pool->get('front-page', function(ItemInterface $item) {
 		<p class="claim"><span lang="en">Read them, comment, <span class="g">try the packages</span>.</span><span lang="pl">Czytajcie, komentujcie, <span class="g">testujcie pakiety</span>.</span></p>
 		<aside class="notes">
 			<p><span lang="en">The call to action. The online version of this deck links each RFC to its chapter.</span><span lang="pl">Czas na call to action. W&nbsp;wersji online przy każdym RFC jest link do jego rozdziału.</span></p>
+		</aside>
+	</section>
+
+	<section class="slide">
+		<div class="eyebrow">upstream <span class="on">//</span> phpredis/phpredis</div>
+		<h2><span lang="en">Six pull requests and <span class="g">two patches</span></span><span lang="pl">Sześć pull requestów i&nbsp;<span class="g">dwa patche</span></span></h2>
+		<div class="columns">
+			<div>
+				<h4 class="g"><span lang="en">Merged, and patches for #2798</span><span lang="pl">Zmergowane oraz patche do #2798</span></h4>
+				<ul class="points">
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3015" target="_blank" rel="noopener">#3015</a> Hash context tables leave the GC buffer before they are freed.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3015" target="_blank" rel="noopener">#3015</a> Tablice kontekstów hashy opuszczają bufor GC, zanim zostaną zwolnione.</span></li>
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3016" target="_blank" rel="noopener">#3016</a> The cluster redirect timer no longer overflows.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3016" target="_blank" rel="noopener">#3016</a> Licznik czasu przekierowań klastra już się nie przepełnia.</span></li>
+					<li><span lang="en"><a class="g" href="https://github.com/ebubekiryigit/phpredis/pull/1" target="_blank" rel="noopener">#2798 · 1</a> rawCommand() by key, queued in a cluster pipeline.</span><span lang="pl"><a class="g" href="https://github.com/ebubekiryigit/phpredis/pull/1" target="_blank" rel="noopener">#2798 · 1</a> rawCommand() po kluczu, kolejkowane w&nbsp;pipeline klastra.</span></li>
+					<li><span lang="en"><a class="g" href="https://github.com/ebubekiryigit/phpredis/pull/2" target="_blank" rel="noopener">#2798 · 2</a> MOVED and ASK followed inside a cluster pipeline.</span><span lang="pl"><a class="g" href="https://github.com/ebubekiryigit/phpredis/pull/2" target="_blank" rel="noopener">#2798 · 2</a> MOVED i&nbsp;ASK obsłużone wewnątrz pipeline klastra.</span></li>
+				</ul>
+			</div>
+			<div>
+				<h4 class="g"><span lang="en">Open</span><span lang="pl">Otwarte</span></h4>
+				<ul class="points">
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3020" target="_blank" rel="noopener">#3020</a> zstd through the zstd extension, without libzstd.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3020" target="_blank" rel="noopener">#3020</a> zstd przez rozszerzenie zstd, bez libzstd.</span></li>
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3021" target="_blank" rel="noopener">#3021</a> A read timeout that reaches reused connections and every cluster node.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3021" target="_blank" rel="noopener">#3021</a> Read timeout, który dociera do połączeń używanych ponownie i&nbsp;do każdego węzła klastra.</span></li>
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3022" target="_blank" rel="noopener">#3022</a> fcall() on RedisCluster: it follows a moved slot.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3022" target="_blank" rel="noopener">#3022</a> fcall() w&nbsp;RedisCluster: podąża za przeniesionym slotem.</span></li>
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3023" target="_blank" rel="noopener">#3023</a> Docs: a timeout of 0 is default_socket_timeout, not &ldquo;no timeout&rdquo;.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3023" target="_blank" rel="noopener">#3023</a> Dokumentacja: timeout 0 to default_socket_timeout, a&nbsp;nie &bdquo;brak timeoutu&rdquo;.</span></li>
+				</ul>
+			</div>
+		</div>
+		<aside class="notes">
+			<p><span lang="en">What the cache work turned up in the Redis client itself. #2798 is someone else's pull request for cluster pipelines; the two patches are drafts on its branch. Each number is a link in the online version.</span><span lang="pl">To, co praca nad cache ujawniła w&nbsp;samym kliencie Redisa. #2798 to cudzy pull request z&nbsp;pipeline'ami dla klastra; oba patche to drafty na jego branchu. W&nbsp;wersji online każdy numer jest linkiem.</span></p>
 		</aside>
 	</section>
 
