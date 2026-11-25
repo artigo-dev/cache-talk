@@ -168,7 +168,7 @@ window.DeckPolish = {
 	'This run has no such segment.': 'W tym przebiegu nie ma takiego segmentu.',
 	'time since the requests arrived →': 'czas od nadejścia żądań →',
 	'a row per request': 'wiersz = żądanie',
-	'No lock (a classic Redis backend)': 'Bez blokady (klasyczny backend Redis)',
+	'No lock (a classic Redis backend)': 'Bez locka (klasyczny backend Redis)',
 	'Symfony LockRegistry (flock, per server · checks every 100 ms)': 'Symfony LockRegistry (flock, na serwer · sprawdza co 100 ms)',
 	'MemoLock (Redis, all servers · woken by a message)': 'MemoLock (Redis, wszystkie serwery · budzenie wiadomością)',
 	'{n} requests · {hosts} servers': 'żądania: {n} · serwery: {hosts}',
