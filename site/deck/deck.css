@@ -1614,9 +1614,47 @@ aside.notes
 }
 
 .lifelines .lifeline .cut,
-.lifelines .lifeline .aged
+.lifelines .lifeline .aged,
+.lifelines .lifeline .expiry
 {
 	flex: 0 0 140px;
+}
+
+/* the TTL running out: a mark of its own colour, not an edit's */
+.lifeline .expiry
+{
+	background: var(--cyan);
+	color: var(--bg);
+	font-weight: 700;
+}
+
+/* what ends the page, above the call's options in the label */
+.lifeline-cause
+{
+	color: var(--text);
+	text-transform: uppercase;
+	letter-spacing: .08em;
+}
+
+/* three rows: expire, then an edit without and with soft */
+.lifelines.three
+{
+	margin-top: 44px;
+}
+
+.lifelines.three .lifeline-row
+{
+	grid-template-columns: 210px 1fr;
+}
+
+.lifelines.three .lifeline-row + .lifeline-row
+{
+	margin-top: 30px;
+}
+
+.lifelines.three + .claim
+{
+	margin-top: 40px;
 }
 
 .lifeline-note

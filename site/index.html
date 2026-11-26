@@ -981,7 +981,7 @@ $lock->exclusively('import:companies',
 				<ul class="points">
 					<li class="fragment"><span lang="en"><span class="g">Nothing cached, just the lock:</span> the import runs on one server at a time.</span><span lang="pl"><span class="g">Nic w&nbsp;cache, sam lock:</span> import działa w&nbsp;danej chwili tylko na jednym serwerze.</span></li>
 					<li class="fragment"><span lang="en"><span class="g">A server dies mid-import?</span> The lock expires on its own after lock_ttl_ms.</span><span lang="pl"><span class="g">Serwer padł w&nbsp;trakcie importu?</span> Lock sam wygaśnie po lock_ttl_ms.</span></li>
-					<li class="fragment"><span lang="en"><span class="g">Or tryLock():</span> if the import is already running elsewhere, skip it instead of waiting.</span><span lang="pl"><span class="g">Albo tryLock():</span> jeśli import już gdzieś trwa, pomiń go zamiast czekać.</span></li>
+					<li class="fragment"><span lang="en"><span class="g">Or tryLock():</span> if the import is already running on another server, this one skips it instead of queuing.</span><span lang="pl"><span class="g">Albo tryLock():</span> jeśli import trwa już na innym serwerze, ten go pomija, zamiast czekać w&nbsp;kolejce.</span></li>
 				</ul>
 			</div>
 		</div>
@@ -989,6 +989,62 @@ $lock->exclusively('import:companies',
 		<aside class="notes">
 			<p><span lang="en">lockAndQueue() without a fetcher is a distributed mutex around any code (php-library's README.MEMOLOCK.md, "Critical section"): every caller takes the lock in turn, on every server, because the lock is in Redis. Pick a key no value is cached under. Uses: an import that must never run twice at once, a payment, a nightly job started by cron on every server.</span><span lang="pl">lockAndQueue() bez fetchera to rozproszony mutex wokół dowolnego kodu (README.MEMOLOCK.md w&nbsp;php-library, „Critical section”): każdy wywołujący dostaje locka po kolei, na każdym serwerze, bo lock siedzi w&nbsp;Redisie. Weźcie klucz, pod którym nic nie trzymacie w&nbsp;cache. Do czego to się przydaje: import, który nigdy nie może ruszyć dwa razy naraz, płatność, nocne zadanie, które cron odpala na każdym serwerze.</span></p>
 			<p><span lang="en">It is a lease, not a hard lock: a holder that outlives lock_ttl_ms without renewLock() loses it to the next one, and a waiter that has waited wait_attempts rounds runs anyway, so a crashed holder never blocks everybody. Size the TTL for the work. tryLock() takes the lock only when it is free and never waits: for work that must run once but nobody should wait for. The stores' stale-while-revalidate elects its one refresher that way (stop 13).</span><span lang="pl">To dzierżawa, a&nbsp;nie twardy lock: właściciel, który przekroczy lock_ttl_ms i&nbsp;nie wywoła renewLock(), traci go na rzecz następnego, a&nbsp;czekający po wait_attempts rundach i&nbsp;tak rusza – więc właściciel, który padł, nigdy nie zablokuje wszystkich. TTL dobierzcie do długości pracy. tryLock() zakłada locka tylko wtedy, gdy jest wolny, i&nbsp;nigdy nie czeka: przydaje się przy pracy, która ma się wykonać raz, ale nikt nie powinien na nią czekać. Tak właśnie stale-while-revalidate w&nbsp;store'ach wybiera ten jeden proces, który odświeża (przystanek 13).</span></p>
+		</aside>
+	</section>
+
+	<section class="slide">
+		<div class="eyebrow"><span lang="en">memolock <span class="on">//</span> trylock</span><span lang="pl">memolock <span class="on">//</span> trylock</span></div>
+		<h2><span lang="en">tryLock: one does it, <span class="g">the rest skip</span></span><span lang="pl">tryLock: jeden robi, <span class="g">reszta odpuszcza</span></span></h2>
+		<div class="columns table-left">
+			<div>
+				<h4 class="code-head">php-library</h4>
+				<pre class="code tight" data-lang="php">
+// cron on every server: only one imports
+// 600_000 ms = 10 min, longer than the import
+$lock = $cache->getMemoLock();
+if($lock->tryLock('import:companies', 600_000)) {
+    try { $this->importCompanies(); }
+    finally { $lock->releaseActiveLock('import:companies'); }
+}</pre>
+				<h4 class="code-head">Symfony: artigo/cache-stampede</h4>
+				<pre class="code tight" data-lang="php">
+// the same 10 min; null when the lock is taken
+if($release = $lock->tryLock('import:companies', 600_000)) {
+    try { $this->importCompanies(); }
+    finally { $release(); }
+}</pre>
+			</div>
+			<div>
+				<ul class="points">
+					<li><span lang="en"><span class="g">When:</span> the work only has to be done by someone, and nobody waits for its result.</span><span lang="pl"><span class="g">Kiedy:</span> wystarczy, że pracę zrobi ktokolwiek, a&nbsp;nikt nie czeka na jej wynik.</span></li>
+					<li class="fragment"><span lang="en"><span class="g">Like a cron on every server:</span> a nightly import, the sitemap, exchange rates from an API. Or refreshing a stale page (stop 13).</span><span lang="pl"><span class="g">Np. cron na każdym serwerze:</span> nocny import, sitemapa, kursy walut z&nbsp;API. Albo odświeżenie starej strony (przystanek 13).</span></li>
+					<li class="fragment bad"><span lang="en"><span class="x">lockAndQueue():</span> the cron at 3:00 on 12 servers, 12 imports one after another.</span><span lang="pl"><span class="x">lockAndQueue():</span> cron o&nbsp;3:00 na 12 serwerach, 12 importów jeden po drugim.</span></li>
+					<li class="fragment"><span lang="en"><span class="g">tryLock():</span> one import; the other 11 servers skip it at once.</span><span lang="pl"><span class="g">tryLock():</span> jeden import; pozostałe 11 serwerów od razu go pomija.</span></li>
+				</ul>
+			</div>
+		</div>
+		<aside class="notes">
+			<p><span lang="en">The difference to the slide before. lockAndQueue() means "everyone in turn": each caller waits for the lock and then runs its own work, so twelve servers import twelve times, never two at once. Right for work that each caller needs done, a payment, an order. tryLock() asks once: is the lock free? If so it takes it and does the work; if not, it returns false at once and the caller does nothing, since another process is doing it right now. Right for work that only has to be done by someone: a nightly import, a cache refresh.</span><span lang="pl">Różnica wobec poprzedniego slajdu. lockAndQueue() to „każdy po kolei”: każdy wywołujący czeka na locka, a&nbsp;potem robi swoją pracę, więc dwanaście serwerów importuje dwanaście razy, nigdy dwa naraz. Dobre dla pracy, którą każdy wywołujący musi mieć zrobioną: płatność, zamówienie. tryLock() pyta raz: czy lock jest wolny? Jeśli tak, bierze go i&nbsp;robi pracę; jeśli nie, od razu dostaje false i&nbsp;nic nie robi, bo ktoś inny właśnie to robi. Dobre dla pracy, którą ktoś po prostu musi zrobić: nocny import, odświeżenie cache.</span></p>
+			<p><span lang="en">php-library: MemoLock::tryLock($id) returns true when this process holds the lock now; release it with releaseActiveLock($id) (README.MEMOLOCK.md, "Take the lock only when it is free"). artigo/cache-stampede: MemoLock::tryLock($key, $ttlMs) returns the release as a closure, or null when the lock is taken. 600_000 is the lock's TTL in milliseconds, 10 minutes, and it must be longer than the import: if the server dies mid-import, the lock expires and tomorrow's cron runs as usual, but a TTL shorter than the work lets a later cron start a second import alongside. php-library would otherwise take lock_ttl_ms from the config (2 s by default), sized for building a page, not for an import. Stale-while-revalidate (stop 13) elects its one refresher exactly this way: one refreshes, the others serve the old page instead of waiting. One limit: tryLock() keeps two runs from overlapping, it does not make a job run once a day. A server whose cron fires after the first import has finished finds the lock free and imports again; crons fire within a second of each other, while an import takes minutes, so in practice it holds, and where it must not happen twice at all, the job also records that it is done.</span><span lang="pl">php-library: MemoLock::tryLock($id) zwraca true, gdy ten proces ma teraz locka; zwalnia się go przez releaseActiveLock($id) (README.MEMOLOCK.md, „Take the lock only when it is free”). artigo/cache-stampede: MemoLock::tryLock($key, $ttlMs) zwraca zwolnienie jako closure albo null, gdy lock jest zajęty. 600_000 to TTL locka w&nbsp;milisekundach, 10 minut, i&nbsp;musi być dłuższy niż import: jeśli serwer padnie w&nbsp;trakcie, lock wygaśnie, a&nbsp;jutrzejszy cron ruszy normalnie, ale TTL krótszy niż praca pozwoli późniejszemu cronowi zacząć drugi import równolegle. Bez niego php-library wzięłaby lock_ttl_ms z&nbsp;konfiguracji (domyślnie 2&nbsp;s), dobrany do generowania strony, a&nbsp;nie do importu. Stale-while-revalidate (przystanek 13) dokładnie tak wybiera ten jeden proces, który odświeża: jeden odświeża, reszta zamiast czekać podaje starą stronę. Jedno ograniczenie: tryLock() pilnuje, żeby dwa przebiegi na siebie nie zachodziły, a&nbsp;nie, żeby zadanie wykonało się raz dziennie. Serwer, którego cron ruszy po zakończeniu pierwszego importu, zastanie wolnego locka i&nbsp;zaimportuje jeszcze raz; crony ruszają w&nbsp;ciągu sekundy, a&nbsp;import trwa minuty, więc w&nbsp;praktyce to wystarcza, a&nbsp;tam, gdzie dwa razy nie może się zdarzyć w&nbsp;ogóle, zadanie dodatkowo zapisuje, że jest zrobione.</span></p>
+		</aside>
+	</section>
+
+	<section class="slide">
+		<div class="eyebrow"><span lang="en">memolock <span class="on">//</span> which one</span><span lang="pl">memolock <span class="on">//</span> który wybrać</span></div>
+		<h2><span lang="en">Wait, <span class="g">or skip?</span></span><span lang="pl">Czekać <span class="g">czy odpuścić?</span></span></h2>
+		<table class="data compare">
+			<thead>
+				<tr><th></th><th><span lang="en">waits?</span><span lang="pl">czeka?</span></th><th><span lang="en">how many run</span><span lang="pl">ile razy działa</span></th><th><span lang="en">the others get</span><span lang="pl">reszta dostaje</span></th><th><span lang="en">for</span><span lang="pl">do czego</span></th></tr>
+			</thead>
+			<tbody>
+				<tr class="fragment"><td><span class="w">lockAndQueue()</span></td><td><span lang="en">yes</span><span lang="pl">tak</span></td><td><span lang="en">each in turn</span><span lang="pl">każdy po kolei</span></td><td><span lang="en">their own run, later</span><span lang="pl">własny przebieg, później</span></td><td><span lang="en">a payment, an order</span><span lang="pl">płatność, zamówienie</span></td></tr>
+				<tr class="fragment"><td><span class="g">lockAndQueue()<small>+ fetcher</small></span></td><td><span lang="en">yes</span><span lang="pl">tak</span></td><td><span lang="en">one</span><span lang="pl">jeden</span></td><td><span lang="en">the first one's result</span><span lang="pl">wynik pierwszego</span></td><td><span lang="en">a cached page (the stampede)</span><span lang="pl">strona w&nbsp;cache (stampede)</span></td></tr>
+				<tr class="fragment"><td><span class="g">tryLock()</span></td><td><span lang="en">no</span><span lang="pl">nie</span></td><td><span lang="en">one</span><span lang="pl">jeden</span></td><td><span lang="en">nothing: they skip</span><span lang="pl">nic: pomijają</span></td><td><span lang="en">a cron on every server, a refresh</span><span lang="pl">cron na każdym serwerze, odświeżenie</span></td></tr>
+			</tbody>
+		</table>
+		<p class="claim fragment"><span lang="en">Wait if you need the work done, or its result. <span class="g">Skip if it is enough that someone does it.</span></span><span lang="pl">Czekaj, jeśli potrzebujesz tej pracy albo jej wyniku. <span class="g">Odpuść, jeśli wystarczy, że ktoś ją zrobi.</span></span></p>
+		<aside class="notes">
+			<p><span lang="en">The difference is what a caller does when it finds the lock taken. lockAndQueue() without a fetcher is a distributed mutex: every caller waits its turn and runs its own work, never two at once (slide 48). With a fetcher, as the cache uses it (stop 9), it is memoization: the first builds, the others wait and are woken to find the result in the cache, so they wait for the result, not for a turn to work. tryLock() asks once and never waits: the one that gets the lock works, the rest skip (slide 49).</span><span lang="pl">Różnica polega na tym, co robi wywołujący, gdy zastanie locka zajętego. lockAndQueue() bez fetchera to rozproszony mutex: każdy czeka na swoją kolej i&nbsp;robi swoją pracę, nigdy dwóch naraz (slajd 48). Z&nbsp;fetcherem, tak jak używa go cache (przystanek 9), to memoizacja: pierwszy generuje, reszta czeka, a&nbsp;po obudzeniu znajduje wynik w&nbsp;cache – czeka więc na wynik, a&nbsp;nie na swoją kolej do pracy. tryLock() pyta raz i&nbsp;nigdy nie czeka: ten, kto dostanie locka, pracuje, reszta pomija (slajd 49).</span></p>
 		</aside>
 	</section>
 
@@ -1066,6 +1122,48 @@ $lock->exclusively('import:companies',
 			<p><span lang="en">Where RediSearch wins outright: pages that expire on their own (docs/measurements/expire.php: a million pages under 1&nbsp;000 tags, a TTL of 5 s, measured after every page expired). The classic design's lists have no expiry: they kept the names of all 1&nbsp;000&nbsp;000 expired pages, 28 MB in 1&nbsp;001 keys, until a garbage collector walks them (in the classic backend the "clean old" run, usually from cron), and it is a walk over every list. RediSearch drops a page from its index when the page expires: 0 MB left. And a ban walks the dead names too (ban.php with expired names planted in the lists, 1&nbsp;000 tags, 50 per call): with five per live page our classic backend nearly ties RediSearch (100&nbsp;000 live pages: 0.62 s against 0.53 s) and then loses (a million live pages and five million old names: 7.2 s against 5.5 s, others waiting up to 198 ms, and the old names add about 190 MB); Cm without Lua 7.9 s, with Lua 12.1 s. (php-library's Store\Redis gets there too, the other way: every entry of its tag lists expires with its page, a Redis 7.4 feature.)</span><span lang="pl">Gdzie RediSearch wygrywa bez dyskusji: przy stronach, które wygasają same (docs/measurements/expire.php: milion stron pod 1&nbsp;000 tagów, TTL 5&nbsp;s, pomiar po wygaśnięciu wszystkich). Listy w&nbsp;klasycznym podejściu nie wygasają: trzymały nazwy wszystkich 1&nbsp;000&nbsp;000 wygasłych stron, 28&nbsp;MB w&nbsp;1&nbsp;001 kluczach, dopóki nie przejdzie po nich garbage collector (w&nbsp;klasycznym backendzie to „clean old”, zwykle odpalane z&nbsp;crona) – a&nbsp;to przejście po każdej liście. RediSearch wyrzuca stronę z&nbsp;indeksu, gdy ta wygasa: zostaje 0&nbsp;MB. Czystka też przechodzi po martwych nazwach (ban.php z&nbsp;nazwami wygasłych stron podrzuconymi do list, 1&nbsp;000 tagów, 50 na wywołanie): przy pięciu takich nazwach na żywą stronę nasz klasyczny backend prawie remisuje z&nbsp;RediSearch (100&nbsp;000 żywych stron: 0,62&nbsp;s wobec 0,53&nbsp;s), a&nbsp;dalej przegrywa (milion żywych stron i&nbsp;pięć milionów starych nazw: 7,2&nbsp;s wobec 5,5&nbsp;s, inni czekają do 198&nbsp;ms, a&nbsp;stare nazwy zajmują około 190&nbsp;MB więcej); Cm bez Lua 7,9&nbsp;s, z&nbsp;Lua 12,1&nbsp;s. (Store\Redis z&nbsp;php-library też to załatwia, tylko inaczej: każdy wpis na jego listach tagów wygasa razem ze stroną – to możliwość Redisa 7.4.)</span></p>
 			<p> <span lang="en">The index made finding the pages easy, and changed nothing about what costs: deleting them, one by one. And the index is itself something to maintain: RediSearch updates it on every write, and its query language has rules of its own.</span><span lang="pl">Indeks ułatwił znajdowanie stron, ale nie zmienił nic w&nbsp;tym, co naprawdę kosztuje: w&nbsp;usuwaniu ich, strona po stronie. A&nbsp;sam indeks też trzeba utrzymać: RediSearch aktualizuje go przy każdym zapisie, a&nbsp;jego język zapytań ma własne reguły.</span></p>
 			<p><span lang="en">Not on the slide, because it was our bug, not RediSearch's: the store put the tag into the query as it came, @tags:{user:42}. RediSearch's query syntax says punctuation and spaces inside a tag have to be escaped; we had not, so the query was a syntax error, the call failed, and every page with that tag stayed until it expired. "user:42" was the example tag of php-library's own README. Fixed since: every character but a letter, a digit or "_" is escaped, @tags:{user\:42}. If someone asks about it: a fair story of what the index brings along.</span><span lang="pl">Tego nie ma na slajdzie, bo to był nasz błąd, nie RediSearch: store wstawiał tag do zapytania tak, jak przyszedł, @tags:{user:42}. Składnia zapytań RediSearch wymaga escapowania interpunkcji i&nbsp;spacji w&nbsp;tagu; my tego nie robiliśmy, więc zapytanie miało błąd składni, wywołanie się wywalało, a&nbsp;każda strona z&nbsp;tym tagiem zostawała w&nbsp;cache, aż wygasła. A&nbsp;„user:42” był przykładowym tagiem w&nbsp;README php-library. Już poprawione: escapujemy każdy znak poza literą, cyfrą i&nbsp;„_”, czyli @tags:{user\:42}. Jeśli ktoś zapyta – to uczciwa historia o&nbsp;tym, co przychodzi razem z&nbsp;indeksem.</span></p>
+		</aside>
+	</section>
+
+	<section class="slide">
+		<div class="eyebrow"><span lang="en">the experiment <span class="on">//</span> one record</span><span lang="pl">eksperyment <span class="on">//</span> jeden rekord</span></div>
+		<h2><span lang="en">One cached page in Redis, <span class="g">its tags in a field</span></span><span lang="pl">Jedna strona w&nbsp;Redisie, <span class="g">tagi w&nbsp;polu</span></span></h2>
+		<div class="columns code-columns">
+			<div>
+				<h4><span lang="en">The page: a hash, one write</span><span lang="pl">Strona: hash, jeden zapis</span></h4>
+				<pre class="code" data-lang="redis">
+&gt; HGETALL cache:front-page
+  data    "&lt;html&gt;… article 42 …"
+  tags    "article-42, category-7"
+
+&gt; HGETALL cache:article-7
+  data    "&lt;html&gt;… article 7 …"
+  tags    "article-7, category-7"
+
+&gt; HGETALL cache:contact
+  data    "&lt;html&gt;… contact …"
+  tags    "contact"</pre>
+			</div>
+			<div>
+				<h4><span lang="en">The index: Redis keeps it</span><span lang="pl">Indeks: prowadzi go Redis</span></h4>
+				<pre class="code" data-lang="redis">
+# once: index "tags" of every cache:* hash
+&gt; FT.CREATE cache ON HASH PREFIX 1 cache:
+    SCHEMA tags TAG
+
+# the editor saves article 42
+&gt; FT.SEARCH cache "@tags:{article\-42}"
+    NOCONTENT
+1) 3
+2) "cache:front-page"
+3) "cache:article-42"
+4) "cache:news"</pre>
+			</div>
+		</div>
+		<div class="term"><b>TAG</b><span><span lang="en">a field the index splits at the commas into tags. It answers "which pages carry article-42": the tags/ lists of stop 3, but written by Redis on every save, and a page drops out when it expires.</span><span lang="pl">pole, które indeks dzieli po przecinkach na tagi. Odpowiada na pytanie „które strony mają article-42”: to listy tags/ z&nbsp;przystanku 3, tylko że dopisuje je Redis przy każdym zapisie, a&nbsp;strona wypada z&nbsp;nich, gdy wygaśnie.</span></span></div>
+		<aside class="notes">
+			<p><span lang="en">The same five pages as the file cache at stop 3, now as Redis hashes. The page is one key: the page itself in "data", its tags in "tags", one string with commas. There is no tag list to write: FT.CREATE, once, tells Redis to read the "tags" field of every key under cache:, and from then on every save updates the index by itself. Forgetting article-42 is one question to the index, and its answer is exactly the list the file cache kept in tags/, the same three pages. Then each of them is deleted, one by one: that part does not change, and the next slide shows what it costs.</span><span lang="pl">Te same pięć stron co w&nbsp;cache plikowym na przystanku 3, tylko teraz jako hashe w&nbsp;Redisie. Strona to jeden klucz: sama strona w&nbsp;polu „data”, jej tagi w&nbsp;polu „tags”, jeden napis z&nbsp;przecinkami. Nie ma żadnej listy tagów do zapisania: FT.CREATE, raz, każe Redisowi czytać pole „tags” każdego klucza pod cache:, i&nbsp;od tej chwili każdy zapis sam aktualizuje indeks. Zapomnienie article-42 to jedno pytanie do indeksu, a&nbsp;odpowiedź to dokładnie ta lista, którą cache plikowy trzymał w&nbsp;tags/ – te same trzy strony. Potem każdą z&nbsp;nich trzeba skasować, jedną po drugiej: to się nie zmienia, a&nbsp;ile to kosztuje, pokazuje następny slajd.</span></p>
+			<p><span lang="en">The backslash in article\-42 is the query syntax: a "-" inside a tag has to be escaped (the bug story in the previous slide's notes). The store reads the matches through a cursor (FT.AGGREGATE … WITHCURSOR, 2&nbsp;500 at a time) rather than one FT.SEARCH; on the slide FT.SEARCH, because it reads more simply. The write is one Lua function (cache_guarded_hset): HSET of data and tags, the expiry, and the invalidation guard's check.</span><span lang="pl">Backslash w&nbsp;article\-42 to wymóg składni zapytań: „-” w&nbsp;tagu trzeba escapować (historia błędu jest w&nbsp;notatkach do poprzedniego slajdu). Store czyta wyniki kursorem (FT.AGGREGATE … WITHCURSOR, po 2&nbsp;500), a&nbsp;nie jednym FT.SEARCH; na slajdzie jest FT.SEARCH, bo łatwiej go przeczytać. Zapis to jedna funkcja Lua (cache_guarded_hset): HSET pól data i&nbsp;tags, czas wygaśnięcia i&nbsp;sprawdzenie strażnika unieważnień.</span></p>
 		</aside>
 	</section>
 
@@ -1222,7 +1320,7 @@ $lock->exclusively('import:companies',
 		<div class="term"><b>stream</b><span><span lang="en">a list in Redis you can only add to; an entry's id is the time it was added, and only grows.</span><span lang="pl">lista w&nbsp;Redisie tylko do dopisywania; identyfikator wpisu to czas dopisania i&nbsp;tylko rośnie.</span></span></div>
 		<aside class="notes">
 			<p><span lang="en">Times, as on the slide before, and that holds for the rules: Redis gives every stream entry the time it was added as its id (milliseconds, plus a counter). The stamp, exactly, is the newest rule the server knew when it began building the page, not the clock at that moment: so a rule from a second earlier that the server had not seen yet still catches the page. The servers keep the rules in their own memory (APCu), refreshed about once a second, so a read does not even ask Redis for them.</span><span lang="pl">Czasy, jak na poprzednim slajdzie, i&nbsp;to się zgadza dla reguł: Redis daje każdemu wpisowi w&nbsp;streamie identyfikator z&nbsp;czasem dopisania (milisekundy plus licznik). Stempel to dokładnie najnowsza reguła, którą serwer znał, gdy zaczynał generować stronę, a&nbsp;nie zegar w&nbsp;tej chwili: dlatego reguła sprzed sekundy, której serwer jeszcze nie widział, i&nbsp;tak tę stronę złapie. Serwery trzymają reguły we własnej pamięci (APCu) i&nbsp;odświeżają je mniej więcej raz na sekundę, więc odczyt nawet nie pyta o&nbsp;nie Redisa.</span></p>
-			<p><span lang="en">The box shows the stream as XRANGE or RedisInsight would: one key per pool, and three rules. The id is the time in milliseconds plus a counter; the time beside it is the same id read as a clock. Each rule has three fields. tags: the tags it forgets, separated by commas. mode any: a page carrying any of them is outdated. mode all, the 11:31 rule: only a page carrying every one of them, here the news by author 3 (all with no tags is a full clear). first: 1 on a rule that had to open a new stream, which is how a lost stream is noticed (slide 61). The page on the right, stamped 12:00, never looks at the 11:31 and 11:58 rules; the 12:05 one catches it. Why a stream at all: the next slide.</span><span lang="pl">W&nbsp;ramce widać stream tak, jak pokazałby go XRANGE albo RedisInsight: jeden klucz na pulę i&nbsp;trzy reguły. Identyfikator to czas w&nbsp;milisekundach plus licznik; godzina obok to ten sam identyfikator odczytany jak zegar. Każda reguła ma trzy pola. tags: tagi, które zapomina, po przecinku. mode any: nieaktualna jest strona z&nbsp;którymkolwiek z&nbsp;nich. mode all, reguła z&nbsp;11:31: tylko strona, która ma je wszystkie, tutaj newsy autora 3 (all bez tagów to pełne czyszczenie). first: 1 ma reguła, która musiała założyć nowy stream – po tym widać, że stream przepadł (slajd 61). Strona po prawej, ze stemplem 12:00, na reguły z&nbsp;11:31 i&nbsp;11:58 w&nbsp;ogóle nie patrzy; łapie ją ta z&nbsp;12:05. Dlaczego w&nbsp;ogóle stream: następny slajd.</span></p>
+			<p><span lang="en">The box shows the stream as XRANGE or RedisInsight would: one key per pool, and three rules. The id is the time in milliseconds plus a counter; the time beside it is the same id read as a clock. Each rule has three fields. tags: the tags it forgets, separated by commas. mode any: a page carrying any of them is outdated. mode all, the 11:31 rule: only a page carrying every one of them, here the news by author 3 (all with no tags is a full clear). first: 1 on a rule that had to open a new stream, which is how a lost stream is noticed (slide 64). The page on the right, stamped 12:00, never looks at the 11:31 and 11:58 rules; the 12:05 one catches it. Why a stream at all: the next slide.</span><span lang="pl">W&nbsp;ramce widać stream tak, jak pokazałby go XRANGE albo RedisInsight: jeden klucz na pulę i&nbsp;trzy reguły. Identyfikator to czas w&nbsp;milisekundach plus licznik; godzina obok to ten sam identyfikator odczytany jak zegar. Każda reguła ma trzy pola. tags: tagi, które zapomina, po przecinku. mode any: nieaktualna jest strona z&nbsp;którymkolwiek z&nbsp;nich. mode all, reguła z&nbsp;11:31: tylko strona, która ma je wszystkie, tutaj newsy autora 3 (all bez tagów to pełne czyszczenie). first: 1 ma reguła, która musiała założyć nowy stream – po tym widać, że stream przepadł (slajd 64). Strona po prawej, ze stemplem 12:00, na reguły z&nbsp;11:31 i&nbsp;11:58 w&nbsp;ogóle nie patrzy; łapie ją ta z&nbsp;12:05. Dlaczego w&nbsp;ogóle stream: następny slajd.</span></p>
 			<p><span lang="en">The cost, said plainly: a fetch is still one read from Redis (HMGET), but it has to be checked against the rules. They are held in APCu and shared by every process of the server; one process refreshes them with an XRANGE of what was added since, at most once per rules_cache_ms (1 s). There is no timer: the first read after the copy turns a second old refreshes it, the other reads do not wait for it, and an idle server reads nothing. It is per pool, since every pool has its own stream. So another server sees a new rule within about a second. With rules_cache_ms: 0 (exact reads) every read asks Redis for the rules too. A read that finds an outdated cached page costs one more call, to drop it.</span><span lang="pl">Koszt, powiedzmy to wprost: pobranie to dalej jeden odczyt z&nbsp;Redisa (HMGET), ale wynik trzeba jeszcze sprawdzić z&nbsp;regułami. Reguły siedzą w&nbsp;APCu, wspólne dla wszystkich procesów na serwerze; jeden proces odświeża je przez XRANGE tego, co doszło od ostatniego razu, co najwyżej raz na rules_cache_ms (1&nbsp;s). Nie ma tu timera: odświeża pierwszy odczyt po tym, jak kopia skończy sekundę, inne odczyty na niego nie czekają, a&nbsp;serwer bez ruchu nie czyta nic. Liczy się to na pulę, bo każda pula ma własny stream. Dlatego inny serwer widzi nową regułę w&nbsp;ciągu mniej więcej sekundy. Przy rules_cache_ms: 0 (dokładne odczyty) każdy odczyt pyta Redisa także o&nbsp;reguły. A&nbsp;odczyt, który trafi na nieaktualną stronę, kosztuje jedno wywołanie więcej, żeby ją wyrzucić.</span></p>
 		</aside>
 	</section>
@@ -1464,10 +1562,11 @@ $lock->exclusively('import:companies',
 &gt; HGETALL cache:front-page
   data    "&lt;html&gt;…"
   tags    "article-42"
-
-# after delete(): the token, for 60 s
+# delete('front-page') at 12:05:00
 &gt; HGETALL cache:front-page
-  epoch   "9f2c6e1a4d7b3080"</pre>
+  epoch   "9f2c6e1a4d7b3080"
+&gt; PTTL cache:front-page
+60000   # 60 s, the window</pre>
 			</div>
 			<div>
 				<h4><span lang="en">Inside Redis (Lua): one step</span><span lang="pl">Lua w&nbsp;Redisie: jeden krok</span></h4>
@@ -1476,9 +1575,9 @@ $lock->exclusively('import:companies',
 redis.call('DEL', key)
 redis.call('HSET', key, 'epoch', token)
 redis.call('PEXPIRE', key, 60000)
--- the save after a miss: another token? refused
+-- the save of front-page, its miss at 12:04:58.312
 local current = redis.call('HGET', key, 'epoch')
--- ~= is PHP's !==; no token at all refuses nothing
+-- 9f2c6e1a… ~= '' (the miss saw none): refused
 if current and current ~= miss_seen then return 0 end</pre>
 			</div>
 		</div>
@@ -1494,6 +1593,47 @@ if current and current ~= miss_seen then return 0 end</pre>
 			<p><span lang="en">The Lua line by line: current is the token the key holds now (HGET gives Lua false when there is none); miss_seen is the token the miss read (PHP keeps it in memory while the page is built, and sends it with the save; php-library's Lua calls it epoch, the first argument of cache_set); ~= is Lua's "not equal", PHP's !== (Lua never converts types when it compares: '1' ~= 1 is true). Another token on the key: something changed it in between, and the save is refused. No token at all: a delete or a write would have left one for a full window, so nothing happened, or a token simply ran out after a long build; the save goes through (php-library v8.5.53 and later; before, "none" against the token the miss saw refused a good page).</span><span lang="pl">Lua linijka po linijce: current to token, który klucz ma teraz (HGET zwraca w&nbsp;Lua false, gdy tokenu nie ma); miss_seen to token odczytany przy cache miss (PHP trzyma go w&nbsp;pamięci, póki strona się generuje, i&nbsp;wysyła razem z&nbsp;zapisem; w&nbsp;Lua w&nbsp;php-library nazywa się epoch i&nbsp;jest pierwszym argumentem cache_set); ~= to w&nbsp;Lua „różne od”, odpowiednik !== z&nbsp;PHP (Lua przy porównaniu nigdy nie konwertuje typów: '1' ~= 1 daje true). Na kluczu jest inny token: coś go w&nbsp;międzyczasie zmieniło, więc zapis odpada. Nie ma żadnego tokenu: usunięcie albo zapis zostawiłyby go na całe okno, więc albo nic się nie wydarzyło, albo token po prostu wygasł po długim generowaniu – zapis przechodzi (php-library od v8.5.53; wcześniej „brak tokenu” zestawiony z&nbsp;tokenem widzianym przy cache miss odrzucał dobrą stronę).</span></p>
 			<p><span lang="en">Why the field is called epoch: a generation of the key, as in Kafka's leader epoch, not a moment in time. A random token needs no counter to read and no clock: two deletes in the same microsecond, or a clock set back, cannot make an old one look current.</span><span lang="pl">Dlaczego pole nazywa się epoch? To generacja klucza, jak leader epoch w&nbsp;Kafce, a&nbsp;nie moment w&nbsp;czasie. Losowy token nie potrzebuje ani licznika, który trzeba by odczytywać, ani zegara: dwa usunięcia w&nbsp;tej samej mikrosekundzie czy cofnięty zegar nie sprawią, że stary token będzie wyglądał na aktualny.</span></p>
 			<p><span lang="en">Only a cached page gets one: a raw value kept under the store's prefix (a counter) is deleted as before; a tombstone would turn it into a hash and its next INCR into a WRONGTYPE error. For the window the deleted key exists: a raw EXISTS sees it.</span><span lang="pl">Nagrobek dostaje tylko strona w&nbsp;cache: surowa wartość trzymana pod prefiksem store'a (np. licznik) jest usuwana po staremu; nagrobek zrobiłby z&nbsp;niej hash, a&nbsp;z&nbsp;następnego INCR – błąd WRONGTYPE. Przez czas okna usunięty klucz dalej istnieje: surowy EXISTS go widzi.</span></p>
+		</aside>
+	</section>
+
+	<section class="slide">
+		<div class="eyebrow"><span lang="en">how it works <span class="on">//</span> the stamp</span><span lang="pl">jak to działa <span class="on">//</span> stempel</span></div>
+		<h2><span lang="en">The stamp lives <span class="g">in a key of its own, one per tag</span></span><span lang="pl">Stempel żyje <span class="g">we własnym kluczu, jeden na tag</span></span></h2>
+		<div class="columns code-columns wide-right">
+			<div>
+				<h4><span lang="en">In Redis: a string per tag</span><span lang="pl">W&nbsp;Redisie: string na tag</span></h4>
+				<pre class="code" data-lang="redis">
+# invalidateTags(['article-42'])
+&gt; GET cache:invalidated:article-42
+"1795604700000000"
+# µs, the server's clock: 12:05:00.000
+
+&gt; PTTL cache:invalidated:article-42
+86400000
+# a day</pre>
+			</div>
+			<div>
+				<h4><span lang="en">Inside Redis (Lua): the save checks</span><span lang="pl">Lua w&nbsp;Redisie: zapis sprawdza</span></h4>
+				<pre class="code" data-lang="lua">
+-- invalidateTags(): one SET per tag, no page touched
+redis.call('SET', stamp_key, now_us, 'PX', 86400000)
+-- the save of front-page, tags article-42, category-7:
+-- its miss began at miss_us (12:04:58.312)
+for _, stamp_key in ipairs(stamp_keys) do
+  local stamp = tonumber(redis.call('GET', stamp_key) or '')
+  if stamp and stamp &gt; miss_us then return 0 end
+end</pre>
+			</div>
+		</div>
+		<ul class="points">
+			<li><span lang="en">The save knows the page's tags, so it reads only their stamps: two GETs here.</span><span lang="pl">Zapis zna tagi strony, więc czyta tylko ich stemple: tu dwa GET-y.</span></li>
+			<li class="fragment"><span lang="en">Miss at 12:04:58.312, stamp at 12:05:00.000, later: <span class="x">refused</span>. A miss after 12:05 saves.</span><span lang="pl">Miss o&nbsp;12:04:58.312, stempel o&nbsp;12:05:00.000: <span class="x">odrzucony</span>. Miss po 12:05 zapisuje.</span></li>
+		</ul>
+		<div class="term"><b><span lang="en">stamp</span><span lang="pl">stempel</span></b><span><span lang="en">the time a tag was last forgotten, by Redis's own clock (TIME), so every server compares against the same clock.</span><span lang="pl">czas ostatniego zapomnienia tagu według zegara samego Redisa (TIME), więc każdy serwer porównuje z&nbsp;tym samym zegarem.</span></span></div>
+		<aside class="notes">
+			<p><span lang="en">Where: next to the pages, one plain string key per tag, under the store's "invalidated" prefix (cache:invalidated:article-42 here; the real key starts with the store's group). Its value is the server's time in microseconds, its expiry a day. A tag forgotten again overwrites it with the newer time; the expiry is the longer of a day and what is left (SET … PX max(life, PTTL)), so a stamp never gets shorter. A million pages under the tag: still this one key, about 100 to 150 bytes.</span><span lang="pl">Gdzie: obok stron, jeden zwykły klucz typu string na tag, pod prefiksem „invalidated” store'a (tu cache:invalidated:article-42; prawdziwy klucz zaczyna się od grupy store'a). Wartość to czas serwera w&nbsp;mikrosekundach, TTL to doba. Kolejne zapomnienie tego samego tagu nadpisuje go nowszym czasem; TTL to dłuższe z&nbsp;dwojga: doba albo to, co zostało (SET … PX max(life, PTTL)), więc stempel nigdy się nie skraca. Milion stron z&nbsp;tym tagiem: dalej ten jeden klucz, około 100–150 bajtów.</span></p>
+			<p><span lang="en">Who writes it: invalidateTags() calls the Lua function cache_stamp (php-library Cache.lua), which reads TIME once and SETs every given tag's key. Redis's clock, not PHP's: the servers' clocks may differ by a second, Redis has one. The miss notes the same clock: its time is read from Redis when the page turns out missing, and PHP keeps it while the page is built.</span><span lang="pl">Kto go zapisuje: invalidateTags() woła funkcję Lua cache_stamp (Cache.lua w&nbsp;php-library), która raz czyta TIME i&nbsp;robi SET klucza każdego podanego tagu. Zegar Redisa, nie PHP: zegary serwerów mogą się różnić o&nbsp;sekundę, a&nbsp;Redis ma jeden. Cache miss zapisuje czas z&nbsp;tego samego zegara: odczytany z&nbsp;Redisa w&nbsp;chwili, gdy okazuje się, że strony nie ma, a&nbsp;PHP trzyma go, póki strona się generuje.</span></p>
+			<p><span lang="en">The check: the save sends the page's stamp keys along (it has the tags anyway, it is saving them), and cache_write_allowed() GETs each: a stamp newer than the miss refuses the save. No stamp, or an older one: the save lands. A miss without its time (a value computed outside the store) cannot be ordered, so any stamp within the window refuses it. The tombstone check of the previous slide runs in the same step.</span><span lang="pl">Sprawdzenie: zapis przesyła klucze stempli swoich tagów (tagi i&nbsp;tak ma, bo je zapisuje), a&nbsp;cache_write_allowed() robi GET każdego: stempel nowszy niż cache miss odrzuca zapis. Brak stempla albo starszy: zapis przechodzi. Cache miss bez czasu (wartość policzona poza store'em) nie da się ustawić w&nbsp;kolejności, więc odrzuca go każdy stempel z&nbsp;okna. Sprawdzenie nagrobka z&nbsp;poprzedniego slajdu idzie w&nbsp;tym samym kroku.</span></p>
 		</aside>
 	</section>
 
@@ -1609,11 +1749,20 @@ $queue->flushAtShutdown(); // after the response</pre>
 	</section>
 
 	<section class="slide">
-		<div class="eyebrow"><span lang="en">the problem <span class="bad">//</span> why stale is not enough</span><span lang="pl">problem <span class="bad">//</span> czemu stale nie wystarcza</span></div>
-		<h2><span lang="en">stale: 60 needs a page <span class="x">to hand out</span></span><span lang="pl">stale: 60 musi mieć <span class="x">co zaserwować</span></span></h2>
-		<div class="lifelines">
+		<div class="eyebrow"><span lang="en">stale and soft <span class="on">//</span> expire and invalidate</span><span lang="pl">stale i&nbsp;soft <span class="on">//</span> wygaśnięcie i&nbsp;unieważnienie</span></div>
+		<h2><span lang="en"><span class="g">stale</span> covers an expiry, <span class="g">soft</span> an edit</span><span lang="pl"><span class="g">stale</span> na wygaśnięcie, <span class="g">soft</span> na edycję</span></h2>
+		<div class="lifelines three">
 			<div class="lifeline-row">
-				<code class="lifeline-label">stale: 60</code>
+				<code class="lifeline-label"><b class="lifeline-cause"><span lang="en">expire</span><span lang="pl">wygaśnięcie</span></b><br>stale: 60</code>
+				<div>
+					<div class="lifeline" aria-label="stale: 60 when the TTL runs out: fresh, then expired, still handed out while it is rebuilt, then the new one">
+						<span class="fresh"><span lang="en">fresh</span><span lang="pl">świeża</span></span><span class="expiry">TTL</span><span class="old"><span lang="en">old: still handed out</span><span lang="pl">stara: nadal serwowana</span></span><span class="new"><span lang="en">new</span><span lang="pl">nowa</span></span>
+					</div>
+					<p class="lifeline-note"><span lang="en">The TTL ran out, <span class="g">the page is still in the cache</span>: <b>stale</b> hands it out while one request rebuilds it.</span><span lang="pl">Minął TTL, ale <span class="g">strona wciąż jest w&nbsp;cache</span>: <b>stale</b> serwuje ją dalej, a&nbsp;nowa generuje się w&nbsp;tle.</span></p>
+				</div>
+			</div>
+			<div class="lifeline-row fragment">
+				<code class="lifeline-label"><b class="lifeline-cause"><span lang="en">invalidate</span><span lang="pl">edycja</span></b><br>stale: 60</code>
 				<div>
 					<div class="lifeline" aria-label="stale: 60 alone: fresh, then deleted by the edit, nothing to hand out while it is rebuilt, then the new one">
 						<span class="fresh"><span lang="en">fresh</span><span lang="pl">świeża</span></span><span class="cut"><span lang="en">✕ edit</span><span lang="pl">✕ edycja</span></span><span class="gone"><span lang="en">nothing: everyone waits</span><span lang="pl">nic: wszyscy czekają</span></span><span class="new"><span lang="en">new</span><span lang="pl">nowa</span></span>
@@ -1622,7 +1771,7 @@ $queue->flushAtShutdown(); // after the response</pre>
 				</div>
 			</div>
 			<div class="lifeline-row fragment">
-				<code class="lifeline-label">stale: 60<br><span class="g">soft: true</span></code>
+				<code class="lifeline-label"><b class="lifeline-cause"><span lang="en">invalidate</span><span lang="pl">edycja</span></b><br>stale: 60<br><span class="g">soft: true</span></code>
 				<div>
 					<div class="lifeline" aria-label="with soft: true: fresh, then aged by the edit, still handed out while it is rebuilt, then the new one">
 						<span class="fresh"><span lang="en">fresh</span><span lang="pl">świeża</span></span><span class="aged"><span lang="en">edit</span><span lang="pl">edycja</span></span><span class="old"><span lang="en">old: still handed out</span><span lang="pl">stara: nadal serwowana</span></span><span class="new"><span lang="en">new</span><span lang="pl">nowa</span></span>
@@ -1631,9 +1780,10 @@ $queue->flushAtShutdown(); // after the response</pre>
 				</div>
 			</div>
 		</div>
-		<p class="claim fragment"><span lang="en"><span class="g">soft: true</span> is for edits only: past the TTL, stale: 60 hands out the old page without it.</span><span lang="pl"><span class="g">soft: true</span> dotyczy tylko edycji: po upływie TTL stale: 60 serwuje starą stronę i&nbsp;bez niego.</span></p>
+		<p class="claim fragment"><span lang="en"><span class="g">TTL ran out:</span> stale: 60 is enough. <span class="g">An edit:</span> it needs soft: true as well.</span><span lang="pl"><span class="g">Minął TTL:</span> wystarczy stale: 60. <span class="g">Edycja:</span> potrzeba jeszcze soft: true.</span></p>
 		<aside class="notes">
-			<p><span lang="en">One page, one edit, two calls. Top, stale: 60 alone: it covers a page whose TTL ran out (stop 13), still in the cache, so it can be handed out while one request rebuilds it. An edit does not wait for the TTL: invalidateTags() takes the page out of use on the spot (Store\Redis deletes it, the versioned store's rule makes it a miss). Nothing is left to hand out, so the stale window never opens, and every visitor waits for the rebuild.</span><span lang="pl">Jedna strona, jedna edycja, dwa wywołania. Na górze samo stale: 60: obejmuje stronę, której skończył się TTL (przystanek 13) – ta wciąż leży w&nbsp;cache, więc można ją dalej serwować, a&nbsp;w&nbsp;tle generuje się nowa. Edycja nie czeka na TTL: invalidateTags() od razu wyłącza stronę z&nbsp;użycia (Store\Redis ją kasuje, w&nbsp;wersjonowanym store'ze reguła robi z&nbsp;niej miss). Nie zostaje nic do zaserwowania, więc okno stale w&nbsp;ogóle się nie otwiera i&nbsp;każdy czeka na nową wersję.</span></p>
+			<p><span lang="en">One page, two ways to end, three rows. A page ends either because its TTL runs out (expire) or because an edit forgets it (invalidate). Top, expire with stale: 60 (stop 13): the page is past its time but still in the cache, so it is handed out while one request rebuilds it.</span><span lang="pl">Jedna strona, dwa sposoby, w&nbsp;jakie się kończy, trzy wiersze. Strona kończy się albo dlatego, że minął jej TTL (wygaśnięcie), albo dlatego, że edycja ją zapomina (unieważnienie). Na górze wygaśnięcie ze stale: 60 (przystanek 13): strona jest po czasie, ale wciąż w&nbsp;cache, więc wychodzi dalej, a&nbsp;w&nbsp;tle generuje się nowa.</span></p>
+			<p><span lang="en">Middle, the same stale: 60 and an edit instead. An edit does not wait for the TTL: invalidateTags() takes the page out of use on the spot (Store\Redis deletes it, the versioned store's rule makes it a miss). Nothing is left to hand out, so the stale window never opens, and every visitor waits for the rebuild.</span><span lang="pl">W&nbsp;środku to samo stale: 60, tylko zamiast wygaśnięcia przychodzi edycja. Edycja nie czeka na TTL: invalidateTags() od razu wyłącza stronę z&nbsp;użycia (Store\Redis ją kasuje, w&nbsp;wersjonowanym store'ze reguła robi z&nbsp;niej miss). Nie zostaje nic do zaserwowania, więc okno stale w&nbsp;ogóle się nie otwiera i&nbsp;każdy czeka na nową wersję.</span></p>
 			<p><span lang="en">Bottom, the same call with soft: true: the edit marks the page old instead of deleting it, and the same stale: 60 window covers it: the old page goes out while one request rebuilds it. soft: true changes only what an edit does; a page past its TTL is handed out with stale: 60 alone. hard: true (or delete(), clear()) still deletes at once, for edits that must show immediately.</span><span lang="pl">Na dole to samo wywołanie z&nbsp;soft: true: edycja, zamiast kasować stronę, oznacza ją jako starą, i&nbsp;obejmuje ją to samo okno stale: 60 – stara strona wychodzi dalej, a&nbsp;w&nbsp;tle generuje się nowa. soft: true zmienia tylko to, co robi edycja; stronę po upływie TTL serwuje już samo stale: 60. hard: true (albo delete(), clear()) dalej kasuje od razu – dla edycji, które muszą być widoczne natychmiast.</span></p>
 		</aside>
 	</section>
@@ -1674,7 +1824,7 @@ $store->invalidateTags(
 		</ul>
 		<div class="term"><b><span lang="en">soft invalidation</span><span lang="pl">miękkie unieważnienie</span></b><span><span lang="en">an edit marks the cached page as old instead of deleting it, for a moment.</span><span lang="pl">edycja na chwilę oznacza stronę w&nbsp;cache jako starą, zamiast ją usuwać.</span></span></div>
 		<aside class="notes">
-			<p><span lang="en">With ttl 0 the menu is kept until an edit reaches it; the edit then serves it for at most a minute more. delete(), clear() and hard: true stay hard: nothing is ever served stale after them. In Symfony the edit side is the same call, invalidateTags(['menu']) soft and invalidateTags(['menu'], hard: true) hard; the display side is the pool on slide 79 (softGraceSeconds and soft: true).</span><span lang="pl">Z&nbsp;ttl 0 menu siedzi w&nbsp;cache, dopóki nie dotknie go edycja; po edycji jest serwowane jeszcze najwyżej przez minutę. delete(), clear() i&nbsp;hard: true zostają twarde: po nich nigdy nie wychodzi nieaktualna wersja. W&nbsp;Symfony edycja to to samo wywołanie: invalidateTags(['menu']) miękko, invalidateTags(['menu'], hard: true) twardo; wyświetlanie to pula ze slajdu 79 (softGraceSeconds i&nbsp;soft: true).</span></p>
+			<p><span lang="en">With ttl 0 the menu is kept until an edit reaches it; the edit then serves it for at most a minute more. delete(), clear() and hard: true stay hard: nothing is ever served stale after them. In Symfony the edit side is the same call, invalidateTags(['menu']) soft and invalidateTags(['menu'], hard: true) hard; the display side is the pool on slide 83 (softGraceSeconds and soft: true).</span><span lang="pl">Z&nbsp;ttl 0 menu siedzi w&nbsp;cache, dopóki nie dotknie go edycja; po edycji jest serwowane jeszcze najwyżej przez minutę. delete(), clear() i&nbsp;hard: true zostają twarde: po nich nigdy nie wychodzi nieaktualna wersja. W&nbsp;Symfony edycja to to samo wywołanie: invalidateTags(['menu']) miękko, invalidateTags(['menu'], hard: true) twardo; wyświetlanie to pula ze slajdu 83 (softGraceSeconds i&nbsp;soft: true).</span></p>
 		</aside>
 	</section>
 
