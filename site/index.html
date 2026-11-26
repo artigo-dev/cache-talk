@@ -1809,26 +1809,26 @@ $pool->get('front-page', function(ItemInterface $item) {
 		<h2><span lang="en">Six pull requests and <span class="g">two patches</span></span><span lang="pl">Sześć pull requestów i&nbsp;<span class="g">dwa patche</span></span></h2>
 		<div class="columns">
 			<div>
-				<h4 class="g"><span lang="en">Merged, and patches for #2798</span><span lang="pl">Zmergowane oraz patche do #2798</span></h4>
+				<h4 class="g"><span lang="en">Merged</span><span lang="pl">Zmergowane</span></h4>
 				<ul class="points">
 					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3015" target="_blank" rel="noopener">#3015</a> Hash context tables leave the GC buffer before they are freed.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3015" target="_blank" rel="noopener">#3015</a> Tablice kontekstów hashy opuszczają bufor GC, zanim zostaną zwolnione.</span></li>
 					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3016" target="_blank" rel="noopener">#3016</a> The cluster redirect timer no longer overflows.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3016" target="_blank" rel="noopener">#3016</a> Licznik czasu przekierowań klastra już się nie przepełnia.</span></li>
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3021" target="_blank" rel="noopener">#3021</a> A read timeout that reaches reused connections and every cluster node.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3021" target="_blank" rel="noopener">#3021</a> Read timeout, który dociera do połączeń używanych ponownie i&nbsp;do każdego węzła klastra.</span></li>
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3022" target="_blank" rel="noopener">#3022</a> fcall() on RedisCluster: it follows a moved slot.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3022" target="_blank" rel="noopener">#3022</a> fcall() w&nbsp;RedisCluster: podąża za przeniesionym slotem.</span></li>
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3023" target="_blank" rel="noopener">#3023</a> Docs: a timeout of 0 is default_socket_timeout.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3023" target="_blank" rel="noopener">#3023</a> Dokumentacja: timeout 0 to default_socket_timeout.</span></li>
+				</ul>
+			</div>
+			<div>
+				<h4 class="g"><span lang="en">Open, and patches for #2798</span><span lang="pl">Otwarte oraz patche do #2798</span></h4>
+				<ul class="points">
+					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3020" target="_blank" rel="noopener">#3020</a> zstd through the zstd extension, without libzstd.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3020" target="_blank" rel="noopener">#3020</a> zstd przez rozszerzenie zstd, bez libzstd.</span></li>
 					<li><span lang="en"><a class="g" href="https://github.com/ebubekiryigit/phpredis/pull/1" target="_blank" rel="noopener">#2798 · 1</a> rawCommand() by key, queued in a cluster pipeline.</span><span lang="pl"><a class="g" href="https://github.com/ebubekiryigit/phpredis/pull/1" target="_blank" rel="noopener">#2798 · 1</a> rawCommand() po kluczu, kolejkowane w&nbsp;pipeline klastra.</span></li>
 					<li><span lang="en"><a class="g" href="https://github.com/ebubekiryigit/phpredis/pull/2" target="_blank" rel="noopener">#2798 · 2</a> MOVED and ASK followed inside a cluster pipeline.</span><span lang="pl"><a class="g" href="https://github.com/ebubekiryigit/phpredis/pull/2" target="_blank" rel="noopener">#2798 · 2</a> MOVED i&nbsp;ASK obsłużone wewnątrz pipeline klastra.</span></li>
 				</ul>
 			</div>
-			<div>
-				<h4 class="g"><span lang="en">Open</span><span lang="pl">Otwarte</span></h4>
-				<ul class="points">
-					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3020" target="_blank" rel="noopener">#3020</a> zstd through the zstd extension, without libzstd.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3020" target="_blank" rel="noopener">#3020</a> zstd przez rozszerzenie zstd, bez libzstd.</span></li>
-					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3021" target="_blank" rel="noopener">#3021</a> A read timeout that reaches reused connections and every cluster node.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3021" target="_blank" rel="noopener">#3021</a> Read timeout, który dociera do połączeń używanych ponownie i&nbsp;do każdego węzła klastra.</span></li>
-					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3022" target="_blank" rel="noopener">#3022</a> fcall() on RedisCluster: it follows a moved slot.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3022" target="_blank" rel="noopener">#3022</a> fcall() w&nbsp;RedisCluster: podąża za przeniesionym slotem.</span></li>
-					<li><span lang="en"><a class="g" href="https://github.com/phpredis/phpredis/pull/3023" target="_blank" rel="noopener">#3023</a> Docs: a timeout of 0 is default_socket_timeout, not &ldquo;no timeout&rdquo;.</span><span lang="pl"><a class="g" href="https://github.com/phpredis/phpredis/pull/3023" target="_blank" rel="noopener">#3023</a> Dokumentacja: timeout 0 to default_socket_timeout, a&nbsp;nie &bdquo;brak timeoutu&rdquo;.</span></li>
-				</ul>
-			</div>
 		</div>
 		<aside class="notes">
-			<p><span lang="en">What the cache work turned up in the Redis client itself. #2798 is someone else's pull request for cluster pipelines; the two patches are drafts on its branch. Each number is a link in the online version.</span><span lang="pl">To, co praca nad cache ujawniła w&nbsp;samym kliencie Redisa. #2798 to cudzy pull request z&nbsp;pipeline'ami dla klastra; oba patche to drafty na jego branchu. W&nbsp;wersji online każdy numer jest linkiem.</span></p>
+			<p><span lang="en">What the cache work turned up in the Redis client itself: five pull requests merged, one open. #2798 is someone else's pull request for cluster pipelines; the two patches are drafts on its branch. Each number is a link in the online version.</span><span lang="pl">To, co praca nad cache ujawniła w&nbsp;samym kliencie Redisa: pięć pull requestów zmergowanych, jeden otwarty. #2798 to cudzy pull request z&nbsp;pipeline'ami dla klastra; oba patche to drafty na jego branchu. W&nbsp;wersji online każdy numer jest linkiem.</span></p>
 		</aside>
 	</section>
 
